@@ -52,28 +52,30 @@ class App(customtkinter.CTk):
             )
             self.sidebar_button[button_num].grid(row=button_num, column=0, padx=20, pady=10, sticky='ew')
             
-        # light mode of GUI
-        self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=NUMBER_OF_GRAPHS+1, column=0, padx=20, pady=(10, 0))
+        # light theme of GUI
+        self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Тема застосунку:", anchor="w")
+        self.appearance_mode_label.grid(row=NUMBER_OF_GRAPHS+1, column=0, padx=20, pady=(10, 0), sticky='ew')
         
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(
             self.sidebar_frame, 
-            values=["Light", "Dark", "System"],
+            values=["Системна", "Світла", "Темна"],
             command=self.change_appearance_mode_event
         )
         self.appearance_mode_optionemenu.grid(
             row=NUMBER_OF_GRAPHS+2, 
-            column=0, padx=20, pady=(10, 10)
+            column=0, padx=20, pady=(10, 10),
+            sticky='ew'
         )
         
         # Scaling options
         self.scaling_label = customtkinter.CTkLabel(
             self.sidebar_frame, 
-            text="UI Scaling:", anchor="w"
+            text="Масштабування інтерфейсу:", anchor="w"
         )
         self.scaling_label.grid(
             row=NUMBER_OF_GRAPHS+3, 
-            column=0, padx=20, pady=(10, 0)
+            column=0, padx=20, pady=(10, 0),
+            sticky='ew'
         )
         self.scaling_optionemenu = customtkinter.CTkOptionMenu(
             self.sidebar_frame, 
@@ -82,7 +84,8 @@ class App(customtkinter.CTk):
         )
         self.scaling_optionemenu.grid(
             row=NUMBER_OF_GRAPHS+4, 
-            column=0, padx=20, pady=(10, 20)
+            column=0, padx=20, pady=(10, 20),
+            sticky='ew'
         )
 
         # update and export buttons
@@ -131,13 +134,18 @@ class App(customtkinter.CTk):
         self.graph_frame.grid(row=0, column=2, padx=20, pady=20, sticky="nsew", rowspan=4)
         
         # default values
-        self.appearance_mode_optionemenu.set("System")
+        self.appearance_mode_optionemenu.set("Системна")
         self.scaling_optionemenu.set("100%")
         self.textbox.insert("0.0", "Оберіть граф, щоб з'явилися поля вводу")
         self.values_textbox.insert("0.0", "Немає значень для вводу")
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
-        customtkinter.set_appearance_mode(new_appearance_mode)
+        theme_map = {
+            "Світла": "Light",
+            "Темна": "Dark",
+            "Системна": "System"
+        }
+        customtkinter.set_appearance_mode(theme_map.get(new_appearance_mode))
 
     def change_scaling_event(self, new_scaling: str):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
@@ -180,6 +188,7 @@ class App(customtkinter.CTk):
         self.values_textbox.delete("0.0", "end")
         self.textbox.insert("0.0", "СумДУ")
         self.values_textbox.insert("0.0", "Немає значень для вводу")
+        self.graph_frame.clear_canvas()
         self.render_input_boxes({})  
 
     def sin_graph(self):
@@ -188,6 +197,7 @@ class App(customtkinter.CTk):
         self.values_textbox.delete("0.0", "end")
         self.textbox.insert("0.0", "Поле для виводу графіку Сінуса")
         self.values_textbox.insert("0.0", "Немає значень для вводу")
+        self.graph_frame.clear_canvas()
         self.render_input_boxes({})
         
     def cos_graph(self):
@@ -196,6 +206,7 @@ class App(customtkinter.CTk):
         self.values_textbox.delete("0.0", "end")
         self.textbox.insert("0.0", "Поле для виводу графіку косінусу")
         self.values_textbox.insert("0.0", "Введіть значення параметру(ів): a")
+        self.graph_frame.clear_canvas()
         self.render_input_boxes({'a_param':1})
         
     def heatmap_graph(self):
@@ -204,6 +215,7 @@ class App(customtkinter.CTk):
         self.values_textbox.delete("0.0", "end")
         self.textbox.insert("0.0", "Поле для виводу графіку теплової карти")
         self.values_textbox.insert("0.0", "Немає значень для вводу")
+        self.graph_frame.clear_canvas()
         self.render_input_boxes({})
     
     def update_figure(self):

@@ -55,7 +55,6 @@ class GraphFrame(customtkinter.CTkFrame):
         
         self.form_export(x=x, y=y)
         
-        self.clear_canvas()
         self.ax.scatter(x,y)
 
         self.graph.draw()
@@ -69,7 +68,6 @@ class GraphFrame(customtkinter.CTkFrame):
         
         self.form_export(x=x, y=y)
         
-        self.clear_canvas()
         self.ax.scatter(x, y)
         
         self.graph.draw()
@@ -89,8 +87,7 @@ class GraphFrame(customtkinter.CTkFrame):
         y = np.cos(params.get('a_param')*x)
         
         self.form_export(x=x, y=y)
-        
-        self.clear_canvas()
+
         self.ax.scatter(x, y)
         
         self.graph.draw()
@@ -107,7 +104,6 @@ class GraphFrame(customtkinter.CTkFrame):
         
         self.form_export(x=X, y=Y, z=Z)
         
-        self.clear_canvas()
         _, self.cbar = heatmap(X, Y, Z, ax=self.ax,
                    cmap="YlGn", cbarlabel="heatmap example")
         
@@ -124,6 +120,9 @@ class GraphFrame(customtkinter.CTkFrame):
             except Exception as e:
                 print(f"Error removing colorbar: {e}")
             self.cbar = None
+            
+        self.graph.draw()
+        self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
             
     def form_export(self, **kwargs):
         self.export_file = kwargs
