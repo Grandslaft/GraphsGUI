@@ -1,5 +1,3 @@
-Here's an enhanced version of your text with improved flow, consistency, and minor corrections:
-
 ---
 
 # Building a Graphical User Interface (GUI) for Data Visualization Using Tkinter and CustomTkinter
