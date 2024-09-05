@@ -4,17 +4,19 @@ import customtkinter
 import matplotlib
 
 from .CTk_functions import ExportWindow, GraphFrame
+from .functions.FeCr_phase_graph import calc_diagram_prep as FeCr_phase_graph
+from .functions.external_functions import wrap_text
 
 matplotlib.use('TkAgg')
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
-NUMBER_OF_GRAPHS = 5
-
 class App(customtkinter.CTk):
-    def __init__(self):
+    def __init__(self, functions):
         super().__init__()
+        
+        self.functions = functions
 
         # configure window
         self.title("Графіки")
@@ -23,13 +25,13 @@ class App(customtkinter.CTk):
         # configure grid layout (4x4)
         self.grid_columnconfigure((0, 1), weight=0)
         self.grid_columnconfigure(2, weight=1)
-        self.grid_rowconfigure((0, 1), weight=0)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=1)
 
         # create sidebar frame with widgets
-        self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
-        self.sidebar_frame.grid(row=0, column=0, rowspan=NUMBER_OF_GRAPHS, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(NUMBER_OF_GRAPHS, weight=1)
+        self.sidebar_frame = customtkinter.CTkFrame(self, width=200, corner_radius=0)
+        self.sidebar_frame.grid(row=0, column=0, rowspan=8, sticky="nsew")
+        self.sidebar_frame.grid_rowconfigure((1,2), weight=1)
         
         self.logo_label = customtkinter.CTkLabel(
             self.sidebar_frame, 
@@ -41,20 +43,31 @@ class App(customtkinter.CTk):
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
         
         # buttons to graphs
+        self.sidebar_button_frame = customtkinter.CTkScrollableFrame(self.sidebar_frame)
+        self.sidebar_button_frame.grid_columnconfigure(0, weight=1)
+        self.sidebar_button_frame.grid(
+            row=1, column=0, 
+            padx=20, pady=(10, 10),
+            sticky="nsew"
+        )
         self.sidebar_button = dict()
-        function_sequence = [self.heart_graph, self.sin_graph, self.cos_graph, self.heatmap_graph]
-        function_names = ['Графік Серця', 'Графік Сінуса', 'Графік Косінуса з параметром a', 'Теплова карта']
-        for button_num in range(1, NUMBER_OF_GRAPHS):
-            self.sidebar_button[button_num] = customtkinter.CTkButton(
-                self.sidebar_frame, 
-                text=function_names[button_num-1], 
-                command=function_sequence[button_num - 1]
+        for num, graph in enumerate(functions):
+            button_text, new_line_count = wrap_text(graph.get('button_name'), 20)
+            self.sidebar_button[graph.get('button_name')] = customtkinter.CTkButton(
+                self.sidebar_button_frame, 
+                text=button_text,
+                height=28*new_line_count,
+                command=lambda g=graph, fun_num=num: self.function_call(graph=g, function_number=fun_num)
             )
-            self.sidebar_button[button_num].grid(row=button_num, column=0, padx=20, pady=10, sticky='ew')
+            self.sidebar_button[graph.get('button_name')].grid(row=num, column=0, padx=5, pady=10, sticky='ew')
             
         # light theme of GUI
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Тема застосунку:", anchor="w")
-        self.appearance_mode_label.grid(row=NUMBER_OF_GRAPHS+1, column=0, padx=20, pady=(10, 0), sticky='ew')
+        self.appearance_mode_label.grid(
+            row=3, column=0, 
+            padx=20, pady=(10, 0), 
+            sticky='ew'
+        )
         
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(
             self.sidebar_frame, 
@@ -62,8 +75,8 @@ class App(customtkinter.CTk):
             command=self.change_appearance_mode_event
         )
         self.appearance_mode_optionemenu.grid(
-            row=NUMBER_OF_GRAPHS+2, 
-            column=0, padx=20, pady=(10, 10),
+            row=4, column=0, 
+            padx=20, pady=(10, 10),
             sticky='ew'
         )
         
@@ -73,8 +86,8 @@ class App(customtkinter.CTk):
             text="Масштабування інтерфейсу:", anchor="w"
         )
         self.scaling_label.grid(
-            row=NUMBER_OF_GRAPHS+3, 
-            column=0, padx=20, pady=(10, 0),
+            row=5, column=0, 
+            padx=20, pady=(10, 0),
             sticky='ew'
         )
         self.scaling_optionemenu = customtkinter.CTkOptionMenu(
@@ -83,15 +96,15 @@ class App(customtkinter.CTk):
             command=self.change_scaling_event
         )
         self.scaling_optionemenu.grid(
-            row=NUMBER_OF_GRAPHS+4, 
-            column=0, padx=20, pady=(10, 20),
+            row=6, column=0, 
+            padx=20, pady=(10, 20),
             sticky='ew'
         )
 
         # update and export buttons
         self.function_buttons_frame = customtkinter.CTkFrame(self, fg_color='transparent')
         self.function_buttons_frame.grid(
-            row=3, column=1, 
+            row=2, column=1, 
             padx=(20, 0), pady=(20, 20), 
             sticky="nsew"
         )
@@ -118,26 +131,32 @@ class App(customtkinter.CTk):
         self.export_window = None
 
         # create textboxes
-        self.textbox = customtkinter.CTkTextbox(self, width=300, height=200)
+        self.textbox = customtkinter.CTkTextbox(self, width=300, height=400)
         self.textbox.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
-        
-        # create textbox
-        self.values_textbox = customtkinter.CTkTextbox(self, width=300, height=50)
-        self.values_textbox.grid(row=1, column=1, padx=(20, 0), pady=(20, 0), sticky="w")
         
         # frame for inputs
         self.input_frame = customtkinter.CTkFrame(self)
-        self.input_frame.grid(row=2, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        self.input_frame.grid(row=1, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
         
         # frame for graph
-        self.graph_frame = GraphFrame(master=self)
-        self.graph_frame.grid(row=0, column=2, padx=20, pady=20, sticky="nsew", rowspan=4)
+        self.graph_frame = GraphFrame(self)
+        self.graph_frame.grid(
+            row=0, column=2, 
+            padx=20, pady=(20, 0), 
+            sticky="nsew", rowspan=2
+        )
+        #! Progress Bar in Development
+        self.eval_progress_bar = customtkinter.CTkProgressBar(self, mode='indeterminate', height=20)
+        self.eval_progress_bar.grid(
+            row=2, column=2, 
+            padx=20, pady=20, 
+            sticky="ew"
+        )
         
         # default values
         self.appearance_mode_optionemenu.set("Системна")
         self.scaling_optionemenu.set("100%")
         self.textbox.insert("0.0", "Оберіть граф, щоб з'явилися поля вводу")
-        self.values_textbox.insert("0.0", "Немає значень для вводу")
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         theme_map = {
@@ -181,44 +200,16 @@ class App(customtkinter.CTk):
                 widget.destroy()
             self.inputs = dict()
             self.graph_frame.plot(self.flag)
-                
-    def heart_graph(self):
-        self.flag = "graph 1"
+            
+    def function_call(self, graph, function_number):
+        self.flag = function_number
         self.textbox.delete("0.0", "end")
-        self.values_textbox.delete("0.0", "end")
-        self.textbox.insert("0.0", "СумДУ")
-        self.values_textbox.insert("0.0", "Немає значень для вводу")
+        self.textbox.insert("0.0", graph.get("params_explanation"))
         self.graph_frame.clear_canvas()
-        self.render_input_boxes({})  
-
-    def sin_graph(self):
-        self.flag = "graph 2"
-        self.textbox.delete("0.0", "end")
-        self.values_textbox.delete("0.0", "end")
-        self.textbox.insert("0.0", "Поле для виводу графіку Сінуса")
-        self.values_textbox.insert("0.0", "Немає значень для вводу")
-        self.graph_frame.clear_canvas()
-        self.render_input_boxes({})
-        
-    def cos_graph(self):
-        self.flag = "graph 3"
-        self.textbox.delete("0.0", "end")
-        self.values_textbox.delete("0.0", "end")
-        self.textbox.insert("0.0", "Поле для виводу графіку косінусу")
-        self.values_textbox.insert("0.0", "Введіть значення параметру(ів): a")
-        self.graph_frame.clear_canvas()
-        self.render_input_boxes({'a_param':1})
-        
-    def heatmap_graph(self):
-        self.flag = "graph 4"
-        self.textbox.delete("0.0", "end")
-        self.values_textbox.delete("0.0", "end")
-        self.textbox.insert("0.0", "Поле для виводу графіку теплової карти")
-        self.values_textbox.insert("0.0", "Немає значень для вводу")
-        self.graph_frame.clear_canvas()
-        self.render_input_boxes({})
+        self.render_input_boxes(graph.get("required_params")) 
     
     def update_figure(self):
+        self.graph_frame.clear_canvas()
         try:
             params = dict()
             for key, value in self.inputs.items():
@@ -237,5 +228,22 @@ class App(customtkinter.CTk):
             self.toplevel_window.focus()  # if window exists focus it
 
 if __name__ == "__main__":
-    app = App()
+    functions = [
+        dict(
+            button_name = "Фазова діаграма для сплаву Fe-Cr",
+            params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
+            graph_title = lambda xAl: "Фазова діаграма для сплаву Fe-Cr" if xAl < 1E-5 else f"Фазова діаграма для сплаву Fe-Cr{xAl*100}Al",
+            graph_type = "lines",
+            required_params = dict(
+                xAl = 0.0,
+            ),
+            axis_titles = {
+                "x_label": "xCr [%]", 
+                "y_label": "T [K]"
+            },
+            function = FeCr_phase_graph
+        ),
+        
+    ]
+    app = App(functions=functions)
     app.mainloop()

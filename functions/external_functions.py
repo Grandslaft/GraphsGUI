@@ -14,3 +14,23 @@ def heatmap(X, Y, Z, row_labels=None, col_labels=None, ax=None,
     cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
     cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
     return im, cbar
+
+def wrap_text(text, wraplength):
+    words = text.split()
+    wrapped_text = ""
+    line_length = 0
+    newline_count = 0
+
+    for word in words:
+        if line_length + len(word) + 1 > wraplength:
+            wrapped_text += "\n" + word
+            line_length = len(word)
+            newline_count += 1
+        else:
+            if wrapped_text:
+                wrapped_text += " " + word
+            else:
+                wrapped_text = word
+            line_length += len(word) + 1
+
+    return wrapped_text, newline_count
