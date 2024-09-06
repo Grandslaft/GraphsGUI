@@ -10,12 +10,14 @@ import numpy as np
 
 from ..functions import heatmap
 
+import inspect
+
 matplotlib.use('TkAgg')
 
 class GraphFrame(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        self.label = customtkinter.CTkLabel(self, text='SumDU')
+        self.label = customtkinter.CTkLabel(self, text='СумДУ')
         self.label.pack()
         
         self.fig = Figure(dpi=100)
@@ -32,6 +34,8 @@ class GraphFrame(customtkinter.CTkFrame):
         y = 13 * np.cos(theta) - 5* np.cos(2*theta) - 2 * np.cos(3*theta) - np.cos(4*theta)
         
         self.ax.scatter(x,y)
+        
+        self.export_file = dict()
         
         self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
     
@@ -50,20 +54,38 @@ class GraphFrame(customtkinter.CTkFrame):
                 self.lines_plot(kwargs)
     
     def lines_plot(self, kwargs):
-        self.label.configure(text=self.current_function.get('graph_title')(**kwargs) if callable(self.current_function.get('graph_title')) else self.current_function.get('graph_title'))
+        if callable(self.current_function.get('graph_title')):
+            title_function = self.current_function.get('graph_title')
+            title_params = list(inspect.signature(title_function).parameters)
+            params_to_pass = {param_name: kwargs[param_name] for param_name in title_params if param_name in kwargs}
+            self.label.configure(text=self.current_function.get('graph_title')(**params_to_pass))
+        else:
+            self.current_function.get('graph_title')
         
         self.params_check(kwargs)
 
-        self.master.eval_progress_bar.start()
-        x, y = self.current_function.get('function')(**kwargs)
-        self.master.eval_progress_bar.stop()
-        
-        self.form_export(x=x, y=y)
-        
-        self.ax.plot(x,y)
+        # self.master.eval_progress_bar.start()
+        data = self.current_function.get('function')(**kwargs)
+        # self.master.eval_progress_bar.stop()
+        coords = []
+        for coord_group in range(1, int(len(data)/2) + 1):
+            x = data[0+2*(coord_group-1)]
+            y = data[1+2*(coord_group-1)]
+            
+            self.export_file[coord_group] = {
+                'x': x,
+                'y': y,
+            }
+            
+            self.ax.plot(x, y)
         
         self.ax.set_xlabel(self.current_function.get('axis_titles')['x_label'])
         self.ax.set_ylabel(self.current_function.get('axis_titles')['y_label'])
+        
+        if self.current_function.get('scale') is not None:
+            scale_options = self.current_function.get('scale')
+            self.ax.set_xscale(scale_options.get('x'))
+            self.ax.set_yscale(scale_options.get('y'))
 
         self.graph.draw()
         
@@ -98,6 +120,3 @@ class GraphFrame(customtkinter.CTkFrame):
             
         self.graph.draw()
         self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
-            
-    def form_export(self, **kwargs):
-        self.export_file = kwargs

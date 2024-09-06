@@ -4,13 +4,52 @@ import customtkinter
 import matplotlib
 
 from .CTk_functions import ExportWindow, GraphFrame
-from .functions.FeCr_phase_graph import calc_diagram_prep as FeCr_phase_graph
+from .functions.physics_graphs import FeCr_phase_graph, FeCrAl_phase_graph
 from .functions.external_functions import wrap_text
 
 matplotlib.use('TkAgg')
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
+
+functions = [
+    dict(
+        button_name = "Фазова діаграма для сплаву Fe-Cr",
+        params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
+        graph_title = lambda xAl: "Фазова діаграма для сплаву Fe-Cr" if xAl < 1E-5 else f"Фазова діаграма для сплаву Fe-Cr{xAl*100}Al",
+        graph_type = "lines",
+        required_params = dict(
+            xAl = 0.0,
+        ),
+        axis_titles = {
+            "x_label": "xCr [%]", 
+            "y_label": "T [K]"
+        },
+        scale = None,
+        function = FeCr_phase_graph
+    ),
+    dict(
+        button_name = "Фазова діаграма для сплаву Fe-Cr-Al",
+        params_explanation = "Введіть параметри xCr, xAl (від 0 до 0.2), N (Натуральне число), r0 (Натуральне число)",
+        graph_title = lambda xAl: f"Фазова діаграма для сплаву Fe-Cr-{xAl*100}Al",
+        graph_type = "lines",
+        required_params = dict(
+            xCr = 0.3,
+            xAl = 0.05,
+            N = 30,
+            r0 = 4,
+        ),
+        axis_titles = {
+            "x_label": "T [K]", 
+            "y_label": "K [dpa/sec]"
+        },
+        scale = dict(
+            x = 'linear',
+            y = 'log'
+        ),
+        function = FeCrAl_phase_graph
+    ),
+]
 
 class App(customtkinter.CTk):
     def __init__(self, functions):
@@ -145,7 +184,7 @@ class App(customtkinter.CTk):
             padx=20, pady=(20, 0), 
             sticky="nsew", rowspan=2
         )
-        #! Progress Bar in Development
+        #! Progress Bar in ACTIVE Development
         self.eval_progress_bar = customtkinter.CTkProgressBar(self, mode='indeterminate', height=20)
         self.eval_progress_bar.grid(
             row=2, column=2, 
@@ -188,7 +227,7 @@ class App(customtkinter.CTk):
                 )
                 self.inputs[input_labels[inp_num]] = customtkinter.CTkEntry(
                     self.input_frame, 
-                    placeholder_text=input_boxes.get(inp_num)
+                    placeholder_text=input_boxes.get(input_labels[inp_num])
                 )
                 self.inputs[input_labels[inp_num]].grid(
                     row=inp_num, column=1, 
@@ -205,6 +244,7 @@ class App(customtkinter.CTk):
         self.flag = function_number
         self.textbox.delete("0.0", "end")
         self.textbox.insert("0.0", graph.get("params_explanation"))
+        self.graph_frame.label.configure(text='СумДУ')
         self.graph_frame.clear_canvas()
         self.render_input_boxes(graph.get("required_params")) 
     
@@ -228,22 +268,5 @@ class App(customtkinter.CTk):
             self.toplevel_window.focus()  # if window exists focus it
 
 if __name__ == "__main__":
-    functions = [
-        dict(
-            button_name = "Фазова діаграма для сплаву Fe-Cr",
-            params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
-            graph_title = lambda xAl: "Фазова діаграма для сплаву Fe-Cr" if xAl < 1E-5 else f"Фазова діаграма для сплаву Fe-Cr{xAl*100}Al",
-            graph_type = "lines",
-            required_params = dict(
-                xAl = 0.0,
-            ),
-            axis_titles = {
-                "x_label": "xCr [%]", 
-                "y_label": "T [K]"
-            },
-            function = FeCr_phase_graph
-        ),
-        
-    ]
     app = App(functions=functions)
     app.mainloop()

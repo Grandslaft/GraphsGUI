@@ -100,7 +100,7 @@ def spinodal(R):
     return xcr, temp
 
 
-def calc_diagram_prep(xAl, N=0, K=0, r0=0):
+def FeCr_phase_graph(xAl, N=0, K=0, r0=0):
     xCr_values = []
     T_values = []
     if xAl < 1E-5:
@@ -129,22 +129,97 @@ def calc_diagram_prep(xAl, N=0, K=0, r0=0):
             xCr += 0.01
     return xCr_values, T_values
 
+def FeCrAl_phase_graph(xCr, xAl, N, r0):
+    K_values_1 = []
+    T_values_1 = []
+    K_values_2 = []
+    T_values_2 = []
+    K_values_3 = []
+    T_values_3 = []
+    K_values_4 = []
+    T_values_4 = []
 
-# # параметри для читання з форми
-# xAl = 0.0
+    K = 1E-8
+    dK = 1E-8
+    dT = 1
+    while K <= 1E-4:
+        flag = 0
+        Temp = 500.0
+        while Temp < 1000.0:
+            kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G = parameters(Temp, xCr, xAl, N, K)
+            l1_1k = lambda1(dk, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+            l2_1k = lambda1(dk, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+            if l1_1k > 0 or l2_1k > 0:
+                K_values_3.append(K)
+                T_values_3.append(Temp)
+                break
+            if flag == 0:
+                k = 0.0
+                while k < math.pi:
+                    l1_1k = lambda1(k, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+                    l1_2k = lambda1(k + dk, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+                    l2_1k = lambda1(k, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+                    l2_2k = lambda1(k + dk, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+                    if (l1_2k > 0 and l1_1k < 0) or (l2_2k > 0 and l2_1k < 0):
+                        K_values_1.append(K)
+                        T_values_1.append(Temp)
+                        flag = 1
+                        break
+                    k += dk
+            Temp += dT
 
-# # Розрахунок діанрами
-# x, y = calc_diagram_prep(xAl, N=0, K=0, r0=0)
+        flag = 0
+        Temp = 1000.0
+        while Temp > 500.0:
+            kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G = parameters(Temp, xCr, xAl, N, K)
+            l1_1k = lambda1(dk, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+            l2_1k = lambda1(dk, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+            if l1_1k > 0 or l2_1k > 0:
+                K_values_4.append(K)
+                T_values_4.append(Temp)
+                break
+            if flag == 0:
+                k = 0.0
+                while k < math.pi:
+                    l1_1k = lambda1(k, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+                    l1_2k = lambda1(k + dk, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+                    l2_1k = lambda1(k, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+                    l2_2k = lambda1(k + dk, kappa, MCrCr, MAlAl, MCrAl, d2fdCr2, d2fdCrdAl, d2fdAl2, G, r0)
+                    if (l1_2k > 0 and l1_1k < 0) or (l2_2k > 0 and l2_1k < 0):
+                        K_values_2.append(K)
+                        T_values_2.append(Temp)
+                        flag = 1
+                        break
+                    k += dk
+            Temp -= dT
 
-# # Виведення на екран
-# if xAl < 1E-5:
-#     title = 'Фазова діаграма для сплаву Fe-Cr'
-# else:
-#     title = 'Фазова діаграма для сплаву Fe-Cr-'+str(xAl*100)+'Al'
-# plt.plot(x,y)
-# plt.xlabel('xCr [%]')
-# plt.ylabel('T [K]')
+        K += dK
+        if K > 9 * dK:
+            dK = dK * 10
+
+    for i in range(len(K_values_2)):
+        K_values_1.append(K_values_2[len(K_values_2) - 1 - i])
+        T_values_1.append(T_values_2[len(T_values_2) - 1 - i])
+
+    for i in range(len(K_values_4)):
+        K_values_3.append(K_values_4[len(K_values_4) - 1 - i])
+        T_values_3.append(T_values_4[len(T_values_4) - 1 - i])
+
+    return T_values_1, K_values_1, T_values_3, K_values_3
+
+
+# xCr = 0.3
+# xAl = 0.05
+# N = 30
+# r0 = 4
+
+# x1, y1, x2, y2 = FeCrAl_phase_graph(xCr, xAl, N, r0)
+# # Виведення на екран preparation
+# title = 'Фазова діаграма для сплаву Fe-Cr-'+str(xAl*100)+'Al'
+# plt.plot(x1,y1)
+# plt.plot(x2,y2)
+# plt.xlabel('T [K]')
+# plt.ylabel('K [dpa/sec]')
+# plt.yscale("log")
 # plt.title(title)
 # plt.show()
-
-# # при натисканні на кнопку EXPORT треба і рисунок зберегти і дані (x, y) в текстовий файл

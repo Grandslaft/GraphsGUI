@@ -1,3 +1,4 @@
+from tkinter import filedialog
 import customtkinter
 import numpy as np
 import json
@@ -68,8 +69,27 @@ class ExportWindow(customtkinter.CTkToplevel):
 
         serializable_data = convert_to_serializable(self.master.graph_frame.export_file)
         
-        with open('data.json', 'w', encoding='utf-8') as f:
+        file_path = filedialog.asksaveasfilename(defaultextension=".json",
+                                         filetypes=[("JSON files", "*.json"),
+                                                    ("All files", "*.*")],
+                                         title="Choose location to save the JSON file")
+        
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"),
+                    ("All files", "*.*")],
+            title="Оберіть місце збереження даних"
+        )
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(serializable_data, f, ensure_ascii=False, indent=4)
     
     def export_graph(self):
-        self.master.graph_frame.fig.savefig('graph.png')
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            filetypes=[("PNG files", "*.png"),
+                    ("JPEG files", "*.jpg"),
+                    ("All files", "*.*")],
+            title="Оберіть місце збереження графіку"
+        )
+        self.master.graph_frame.ax.set_title(self.master.graph_frame.label.cget("text"))
+        self.master.graph_frame.fig.savefig(file_path)
