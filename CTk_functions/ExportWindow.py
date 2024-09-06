@@ -69,11 +69,6 @@ class ExportWindow(customtkinter.CTkToplevel):
 
         serializable_data = convert_to_serializable(self.master.graph_frame.export_file)
         
-        file_path = filedialog.asksaveasfilename(defaultextension=".json",
-                                         filetypes=[("JSON files", "*.json"),
-                                                    ("All files", "*.*")],
-                                         title="Choose location to save the JSON file")
-        
         file_path = filedialog.asksaveasfilename(
             defaultextension=".json",
             filetypes=[("JSON files", "*.json"),

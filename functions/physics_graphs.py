@@ -206,20 +206,3 @@ def FeCrAl_phase_graph(xCr, xAl, N, r0):
         T_values_3.append(T_values_4[len(T_values_4) - 1 - i])
 
     return T_values_1, K_values_1, T_values_3, K_values_3
-
-
-# xCr = 0.3
-# xAl = 0.05
-# N = 30
-# r0 = 4
-
-# x1, y1, x2, y2 = FeCrAl_phase_graph(xCr, xAl, N, r0)
-# # Виведення на екран preparation
-# title = 'Фазова діаграма для сплаву Fe-Cr-'+str(xAl*100)+'Al'
-# plt.plot(x1,y1)
-# plt.plot(x2,y2)
-# plt.xlabel('T [K]')
-# plt.ylabel('K [dpa/sec]')
-# plt.yscale("log")
-# plt.title(title)
-# plt.show()

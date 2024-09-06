@@ -67,7 +67,6 @@ class GraphFrame(customtkinter.CTkFrame):
         # self.master.eval_progress_bar.start()
         data = self.current_function.get('function')(**kwargs)
         # self.master.eval_progress_bar.stop()
-        coords = []
         for coord_group in range(1, int(len(data)/2) + 1):
             x = data[0+2*(coord_group-1)]
             y = data[1+2*(coord_group-1)]
