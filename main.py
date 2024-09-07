@@ -3,9 +3,9 @@ import customtkinter
 
 import matplotlib
 
-from .CTk_functions import ExportWindow, GraphFrame
-from .functions.physics_graphs import FeCr_phase_graph, FeCrAl_phase_graph
-from .functions.external_functions import wrap_text
+from src.CTk_functions import ExportWindow, GraphFrame
+from src.functions.physics_graphs import FeCr_phase_graph, FeCrAl_phase_graph
+from src.functions.external_functions import wrap_text
 
 matplotlib.use('TkAgg')
 
