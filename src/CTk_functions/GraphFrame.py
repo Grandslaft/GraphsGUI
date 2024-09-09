@@ -12,7 +12,16 @@ from ..functions import heatmap
 
 import inspect
 
+import multiprocessing
+
+AWAIT_TIME = 100
+
 matplotlib.use('TkAgg')
+
+def run_in_thread(result_queue, func, kwargs):
+    data = func(**kwargs)
+    
+    result_queue.put(data)
 
 class GraphFrame(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -37,36 +46,45 @@ class GraphFrame(customtkinter.CTkFrame):
         
         self.export_file = dict()
         
+        self.result_queue = multiprocessing.Queue()
+        
         self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
     
-    def params_check(self, params):
+    def params_check(self):
         try:
             for key in self.current_function.get('required_params'):
-                params.get(key)
+                self.params.get(key)
         except NameError as e:
             self.master.values_textbox.delete("0.0", "end")
             self.master.values_textbox.insert("0.0", f"Немає значення параметру(ів): {e}")
     
     def plot(self, fun_num, **kwargs):
         self.current_function = self.master.functions[fun_num]
+        
+        self.params = kwargs
+                
+        self.master.eval_progress_bar.start()
+        thread = multiprocessing.Process(target=run_in_thread, args=(self.result_queue, self.current_function['function'], kwargs,))
+        thread.start()
+        
+        self.master.after(AWAIT_TIME, self.check_result_queue)
+    
+    def update_plot(self, data):
         match self.current_function.get('graph_type'):
             case 'lines':
-                self.lines_plot(kwargs)
+                self.lines_plot(data)
     
-    def lines_plot(self, kwargs):
+    def lines_plot(self, data):
         if callable(self.current_function.get('graph_title')):
             title_function = self.current_function.get('graph_title')
             title_params = list(inspect.signature(title_function).parameters)
-            params_to_pass = {param_name: kwargs[param_name] for param_name in title_params if param_name in kwargs}
+            params_to_pass = {param_name: self.params[param_name] for param_name in title_params if param_name in self.params}
             self.label.configure(text=self.current_function.get('graph_title')(**params_to_pass))
         else:
             self.current_function.get('graph_title')
         
-        self.params_check(kwargs)
-
-        # self.master.eval_progress_bar.start()
-        data = self.current_function.get('function')(**kwargs)
-        # self.master.eval_progress_bar.stop()
+        self.params_check()
+        
         for coord_group in range(1, int(len(data)/2) + 1):
             x = data[0+2*(coord_group-1)]
             y = data[1+2*(coord_group-1)]
@@ -89,6 +107,19 @@ class GraphFrame(customtkinter.CTkFrame):
         self.graph.draw()
         
         self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
+
+    def check_result_queue(self):
+        try:
+            # Try to get the result from the queue
+            data = self.result_queue.get_nowait()
+
+            # Stop the progress bar
+            self.master.eval_progress_bar.stop()
+            
+            self.update_plot(data)
+        except multiprocessing.queues.Empty:
+            # If no result yet, keep checking
+            self.master.after(AWAIT_TIME, self.check_result_queue)
         
     # def heatmap_func(self):
     #     self.label.configure(text='Теплова карта')

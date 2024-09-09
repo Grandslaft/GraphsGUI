@@ -3,6 +3,8 @@ import customtkinter
 
 import matplotlib
 
+import multiprocessing
+
 from src.CTk_functions import ExportWindow, GraphFrame
 from src.functions.physics_graphs import FeCr_phase_graph, FeCrAl_phase_graph
 from src.functions.external_functions import wrap_text
@@ -14,9 +16,9 @@ customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "gre
 
 functions = [
     dict(
-        button_name = "Фазова діаграма для сплаву Fe-Cr",
+        button_name = "Фазова діаграма для сплаву Fe-Cr-Al у рівноважних умовах",
         params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
-        graph_title = lambda xAl: "Фазова діаграма для сплаву Fe-Cr" if xAl < 1E-5 else f"Фазова діаграма для сплаву Fe-Cr{xAl*100}Al",
+        graph_title = lambda xAl: "Фазова діаграма для сплаву Fe-Cr" if xAl < 1E-5 else f"Фазова діаграма для сплаву Fe-Cr-{xAl*100}Al",
         graph_type = "lines",
         required_params = dict(
             xAl = 0.0,
@@ -29,7 +31,7 @@ functions = [
         function = FeCr_phase_graph
     ),
     dict(
-        button_name = "Фазова діаграма для сплаву Fe-Cr-Al",
+        button_name = "Фазова діаграма для опроміненого сплаву Fe-Cr-Al",
         params_explanation = "Введіть параметри xCr, xAl (від 0 до 0.2), N (Натуральне число), r0 (Натуральне число)",
         graph_title = lambda xAl: f"Фазова діаграма для сплаву Fe-Cr-{xAl*100}Al",
         graph_type = "lines",
@@ -70,7 +72,7 @@ class App(customtkinter.CTk):
         # create sidebar frame with widgets
         self.sidebar_frame = customtkinter.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, rowspan=8, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure((1,2), weight=1)
+        self.sidebar_frame.grid_rowconfigure((1), weight=1)
         
         self.logo_label = customtkinter.CTkLabel(
             self.sidebar_frame, 
@@ -82,18 +84,18 @@ class App(customtkinter.CTk):
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
         
         # buttons to graphs
-        self.sidebar_button_frame = customtkinter.CTkScrollableFrame(self.sidebar_frame)
-        self.sidebar_button_frame.grid_columnconfigure(0, weight=1)
-        self.sidebar_button_frame.grid(
+        self.sidebar_buttons_frame = customtkinter.CTkScrollableFrame(self.sidebar_frame)
+        self.sidebar_buttons_frame.grid_columnconfigure(0, weight=1)
+        self.sidebar_buttons_frame.grid(
             row=1, column=0, 
-            padx=20, pady=(10, 10),
+            padx=20, pady=(10, 50),
             sticky="nsew"
         )
         self.sidebar_button = dict()
         for num, graph in enumerate(functions):
             button_text, new_line_count = wrap_text(graph.get('button_name'), 20)
             self.sidebar_button[graph.get('button_name')] = customtkinter.CTkButton(
-                self.sidebar_button_frame, 
+                self.sidebar_buttons_frame, 
                 text=button_text,
                 height=28*new_line_count,
                 command=lambda g=graph, fun_num=num: self.function_call(graph=g, function_number=fun_num)
@@ -103,7 +105,7 @@ class App(customtkinter.CTk):
         # light theme of GUI
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Тема застосунку:", anchor="w")
         self.appearance_mode_label.grid(
-            row=3, column=0, 
+            row=2, column=0, 
             padx=20, pady=(10, 0), 
             sticky='ew'
         )
@@ -114,7 +116,7 @@ class App(customtkinter.CTk):
             command=self.change_appearance_mode_event
         )
         self.appearance_mode_optionemenu.grid(
-            row=4, column=0, 
+            row=3, column=0, 
             padx=20, pady=(10, 10),
             sticky='ew'
         )
@@ -125,7 +127,7 @@ class App(customtkinter.CTk):
             text="Масштабування інтерфейсу:", anchor="w"
         )
         self.scaling_label.grid(
-            row=5, column=0, 
+            row=4, column=0, 
             padx=20, pady=(10, 0),
             sticky='ew'
         )
@@ -135,7 +137,7 @@ class App(customtkinter.CTk):
             command=self.change_scaling_event
         )
         self.scaling_optionemenu.grid(
-            row=6, column=0, 
+            row=5, column=0, 
             padx=20, pady=(10, 20),
             sticky='ew'
         )
@@ -210,6 +212,7 @@ class App(customtkinter.CTk):
         customtkinter.set_widget_scaling(new_scaling_float)
         
     def render_input_boxes(self, input_boxes={}): 
+        self.destroy_input_boxes()
         if len(input_boxes) != 0:
             self.inputs = dict()
             input_labels = list(input_boxes.keys())
@@ -235,10 +238,12 @@ class App(customtkinter.CTk):
                     sticky="nsew"
                 )
         else:
-            for widget in self.input_frame.winfo_children():
-                widget.destroy()
             self.inputs = dict()
             self.graph_frame.plot(self.flag)
+            
+    def destroy_input_boxes(self):
+        for widget in self.input_frame.winfo_children():
+            widget.destroy()
             
     def function_call(self, graph, function_number):
         self.flag = function_number
@@ -250,16 +255,17 @@ class App(customtkinter.CTk):
     
     def update_figure(self):
         self.graph_frame.clear_canvas()
-        try:
-            params = dict()
-            for key, value in self.inputs.items():
-                params[key] = float(value.get())
-            self.graph_frame.plot(self.flag, **params)
-        except AttributeError:
+        if len(self.functions[self.flag]['required_params']) != 0:
+            try:
+                params = dict()
+                for key, value in self.inputs.items():
+                    params[key] = float(value.get())
+                self.graph_frame.plot(self.flag, **params)                
+            except ValueError as e:
+                self.textbox.delete("0.0", "end")
+                self.textbox.insert("0.0", f"Невірне значення параметру {e}")
+        else:
             self.graph_frame.plot(self.flag)
-        except ValueError as e:
-            self.values_textbox.delete("0.0", "end")
-            self.values_textbox.insert("0.0", f"Невірне значення параметру {e}")
     
     def export_files(self):
         if self.export_window is None or not self.export_window.winfo_exists():
@@ -268,5 +274,6 @@ class App(customtkinter.CTk):
             self.toplevel_window.focus()  # if window exists focus it
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     app = App(functions=functions)
     app.mainloop()
