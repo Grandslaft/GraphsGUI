@@ -26,9 +26,9 @@ This GUI will incorporate several essential features:
 
 ### Running the Application
 
-To run this application, execute it as a module using the following command:
+To run this application you just need to run it like this:
 ```bash
-python -m main
+python main.py
 ```
 
 ---
