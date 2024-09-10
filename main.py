@@ -28,6 +28,10 @@ functions = [
             "y_label": "T [K]"
         },
         scale = None,
+        lim = dict(
+            x=(10, 90),
+            y=None
+        ),
         function = FeCr_phase_graph
     ),
     dict(
@@ -49,6 +53,10 @@ functions = [
             x = 'linear',
             y = 'log'
         ),
+        lim = dict(
+            x=None,
+            y=(1E-8, 1E-4)
+        ),
         function = FeCrAl_phase_graph
     ),
 ]
@@ -61,7 +69,7 @@ class App(customtkinter.CTk):
 
         # configure window
         self.title("Графіки")
-        self.geometry(f"{1400}x{720}")
+        self.geometry(f"{1280}x{720}")
 
         # configure grid layout (4x4)
         self.grid_columnconfigure((0, 1), weight=0)
@@ -93,14 +101,14 @@ class App(customtkinter.CTk):
         )
         self.sidebar_button = dict()
         for num, graph in enumerate(functions):
-            button_text, new_line_count = wrap_text(graph.get('button_name'), 20)
-            self.sidebar_button[graph.get('button_name')] = customtkinter.CTkButton(
+            button_text, new_line_count = wrap_text(graph['button_name'], 20)
+            self.sidebar_button[graph['button_name']] = customtkinter.CTkButton(
                 self.sidebar_buttons_frame, 
                 text=button_text,
                 height=28*new_line_count,
                 command=lambda g=graph, fun_num=num: self.function_call(graph=g, function_number=fun_num)
             )
-            self.sidebar_button[graph.get('button_name')].grid(row=num, column=0, padx=5, pady=10, sticky='ew')
+            self.sidebar_button[graph['button_name']].grid(row=num, column=0, padx=5, pady=10, sticky='ew')
             
         # light theme of GUI
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Тема застосунку:", anchor="w")
@@ -186,8 +194,9 @@ class App(customtkinter.CTk):
             padx=20, pady=(20, 0), 
             sticky="nsew", rowspan=2
         )
-        #! Progress Bar in ACTIVE Development
-        self.eval_progress_bar = customtkinter.CTkProgressBar(self, mode='indeterminate', height=20)
+        
+        self.eval_progress_bar = customtkinter.CTkProgressBar(self, mode='determinate', height=20)
+        self.eval_progress_bar.set(0)
         self.eval_progress_bar.grid(
             row=2, column=2, 
             padx=20, pady=20, 
@@ -205,7 +214,7 @@ class App(customtkinter.CTk):
             "Темна": "Dark",
             "Системна": "System"
         }
-        customtkinter.set_appearance_mode(theme_map.get(new_appearance_mode))
+        customtkinter.set_appearance_mode(theme_map[new_appearance_mode])
 
     def change_scaling_event(self, new_scaling: str):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
@@ -230,7 +239,7 @@ class App(customtkinter.CTk):
                 )
                 self.inputs[input_labels[inp_num]] = customtkinter.CTkEntry(
                     self.input_frame, 
-                    placeholder_text=input_boxes.get(input_labels[inp_num])
+                    placeholder_text=input_boxes[input_labels[inp_num]]
                 )
                 self.inputs[input_labels[inp_num]].grid(
                     row=inp_num, column=1, 
@@ -248,13 +257,14 @@ class App(customtkinter.CTk):
     def function_call(self, graph, function_number):
         self.flag = function_number
         self.textbox.delete("0.0", "end")
-        self.textbox.insert("0.0", graph.get("params_explanation"))
+        self.textbox.insert("0.0", graph["params_explanation"])
         self.graph_frame.label.configure(text='СумДУ')
         self.graph_frame.clear_canvas()
-        self.render_input_boxes(graph.get("required_params")) 
+        self.render_input_boxes(graph["required_params"]) 
     
     def update_figure(self):
         self.graph_frame.clear_canvas()
+        
         if len(self.functions[self.flag]['required_params']) != 0:
             try:
                 params = dict()

@@ -19,9 +19,8 @@ AWAIT_TIME = 100
 matplotlib.use('TkAgg')
 
 def run_in_thread(result_queue, func, kwargs):
-    data = func(**kwargs)
-    
-    result_queue.put(data)
+    for output in func(**kwargs):
+        result_queue.put(output)
 
 class GraphFrame(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -62,26 +61,31 @@ class GraphFrame(customtkinter.CTkFrame):
         self.current_function = self.master.functions[fun_num]
         
         self.params = kwargs
-                
-        self.master.eval_progress_bar.start()
-        thread = multiprocessing.Process(target=run_in_thread, args=(self.result_queue, self.current_function['function'], kwargs,))
+        thread = multiprocessing.Process(
+            target=run_in_thread, 
+            args=(
+                self.result_queue, 
+                self.current_function['function'], 
+                kwargs,
+            )
+        )
         thread.start()
         
         self.master.after(AWAIT_TIME, self.check_result_queue)
     
     def update_plot(self, data):
-        match self.current_function.get('graph_type'):
+        match self.current_function['graph_type']:
             case 'lines':
                 self.lines_plot(data)
     
     def lines_plot(self, data):
-        if callable(self.current_function.get('graph_title')):
-            title_function = self.current_function.get('graph_title')
+        if callable(self.current_function['graph_title']):
+            title_function = self.current_function['graph_title']
             title_params = list(inspect.signature(title_function).parameters)
             params_to_pass = {param_name: self.params[param_name] for param_name in title_params if param_name in self.params}
-            self.label.configure(text=self.current_function.get('graph_title')(**params_to_pass))
+            self.label.configure(text=self.current_function['graph_title'](**params_to_pass))
         else:
-            self.current_function.get('graph_title')
+            self.current_function['graph_title']
         
         self.params_check()
         
@@ -96,13 +100,38 @@ class GraphFrame(customtkinter.CTkFrame):
             
             self.ax.plot(x, y)
         
-        self.ax.set_xlabel(self.current_function.get('axis_titles')['x_label'])
-        self.ax.set_ylabel(self.current_function.get('axis_titles')['y_label'])
+        self.ax.set_xlabel(self.current_function['axis_titles']['x_label'])
+        self.ax.set_ylabel(self.current_function['axis_titles']['y_label'])
         
-        if self.current_function.get('scale') is not None:
-            scale_options = self.current_function.get('scale')
-            self.ax.set_xscale(scale_options.get('x'))
-            self.ax.set_yscale(scale_options.get('y'))
+        if self.current_function['scale'] is not None:
+            scale_options = self.current_function['scale']
+            self.ax.set_xscale(scale_options['x'])
+            self.ax.set_yscale(scale_options['y'])
+        
+        if self.current_function['lim'] is not None:
+            lim_options = self.current_function['lim']
+            self.ax.set_xlim(lim_options['x'])
+            self.ax.set_ylim(lim_options['y'])
+        
+        # if self.current_function['lim'] is not None:
+        #     lim_options = self.current_function['lim']
+        #     for lims in lim_options.items():
+        #         if lims[-1][-1] == 'absolute':
+        #             if lims[0] == 'x':
+        #                 self.ax.set_xlim(lims[-1][0])
+        #             elif lims[0] == 'y':
+        #                 self.ax.set_ylim(lims[-1][0])
+        #         elif lims[-1][-1] == 'relative':
+        #             if lims[0] == 'x':
+        #                 left, right = plt.xlim()
+        #                 axis_range = right - left
+        #                 rel_lims = set(value * axis_range for value in lims[-1][0])
+        #                 self.ax.set_xlim(rel_lims)
+        #             elif lims[0] == 'y':
+        #                 left, right = plt.xlim()
+        #                 axis_range = right - left
+        #                 rel_lims = set(value * axis_range for value in lims[-1][0])
+        #                 self.ax.set_ylim(rel_lims)
 
         self.graph.draw()
         
@@ -112,11 +141,13 @@ class GraphFrame(customtkinter.CTkFrame):
         try:
             # Try to get the result from the queue
             data = self.result_queue.get_nowait()
-
-            # Stop the progress bar
-            self.master.eval_progress_bar.stop()
             
-            self.update_plot(data)
+            if data[-1] == 'progress':
+                self.master.eval_progress_bar.set(data[0])
+                self.master.after(AWAIT_TIME, self.check_result_queue)
+            else:
+                
+                self.update_plot(data)
         except multiprocessing.queues.Empty:
             # If no result yet, keep checking
             self.master.after(AWAIT_TIME, self.check_result_queue)
@@ -139,6 +170,7 @@ class GraphFrame(customtkinter.CTkFrame):
     #     self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
 
     def clear_canvas(self):
+        self.master.eval_progress_bar.set(0)
         self.ax.clear()
         
         if hasattr(self, 'cbar') and self.cbar is not None:
