@@ -32,12 +32,13 @@ functions = [
             x=(10, 90),
             y=None
         ),
-        function = FeCr_phase_graph
+        function = FeCr_phase_graph,
+        default_file_name = lambda xAl: "T(xCr)_Al" if xAl < 1E-5 else f"T(xCr)_Al{xAl*100}%"
     ),
     dict(
         button_name = "Фазова діаграма для опроміненого сплаву Fe-Cr-Al",
         params_explanation = "Введіть параметри xCr, xAl (від 0 до 0.2), N (Натуральне число), r0 (Натуральне число)",
-        graph_title = lambda xAl: f"Фазова діаграма для сплаву Fe-Cr-{xAl*100}Al",
+        graph_title = lambda xCr, xAl: f"Фазова діаграма для сплаву Fe-{xCr*100}%Cr-{xAl*100}%Al",
         graph_type = "lines",
         required_params = dict(
             xCr = 0.3,
@@ -57,7 +58,8 @@ functions = [
             x=None,
             y=(1E-8, 1E-4)
         ),
-        function = FeCrAl_phase_graph
+        function = FeCrAl_phase_graph,
+        default_file_name = lambda xCr, xAl, N, r0: f"K(T)_Cr{xCr*100}%Al{xAl*100}%_N{N}_r0{r0}"
     ),
 ]
 

@@ -43,7 +43,8 @@ class GraphFrame(customtkinter.CTkFrame):
         
         self.ax.scatter(x,y)
         
-        self.export_file = dict()
+        self.export_files = []
+        self.default_file_name = None
         
         self.result_queue = multiprocessing.Queue()
         
@@ -83,9 +84,17 @@ class GraphFrame(customtkinter.CTkFrame):
             title_function = self.current_function['graph_title']
             title_params = list(inspect.signature(title_function).parameters)
             params_to_pass = {param_name: self.params[param_name] for param_name in title_params if param_name in self.params}
-            self.label.configure(text=self.current_function['graph_title'](**params_to_pass))
+            self.label.configure(text=title_function(**params_to_pass))
         else:
-            self.current_function['graph_title']
+            self.label.configure(text=self.current_function['graph_title'])
+        
+        if callable(self.current_function['default_file_name']):
+            fname_function = self.current_function['default_file_name']
+            fname_params = list(inspect.signature(fname_function).parameters)
+            params_to_pass = {param_name: self.params[param_name] for param_name in fname_params if param_name in self.params}
+            self.default_file_name = fname_function(**params_to_pass)
+        else:
+            self.default_file_name = self.current_function['default_file_name']
         
         self.params_check()
         
@@ -93,10 +102,17 @@ class GraphFrame(customtkinter.CTkFrame):
             x = data[0+2*(coord_group-1)]
             y = data[1+2*(coord_group-1)]
             
-            self.export_file[coord_group] = {
-                'x': x,
-                'y': y,
-            }
+            # # json save
+            # self.export_file[coord_group] = {
+            #     'x': x,
+            #     'y': y,
+            # }
+
+            file_str = ""
+            for i in range(len(x)):
+                file_str += str(x[i]) + '\t' + str(y[i]) + '\n'
+            
+            self.export_files.append(file_str)
             
             self.ax.plot(x, y)
         
@@ -113,6 +129,7 @@ class GraphFrame(customtkinter.CTkFrame):
             self.ax.set_xlim(lim_options['x'])
             self.ax.set_ylim(lim_options['y'])
         
+        # # relative axis limits
         # if self.current_function['lim'] is not None:
         #     lim_options = self.current_function['lim']
         #     for lims in lim_options.items():
@@ -171,6 +188,7 @@ class GraphFrame(customtkinter.CTkFrame):
 
     def clear_canvas(self):
         self.master.eval_progress_bar.set(0)
+        self.export_files = []
         self.ax.clear()
         
         if hasattr(self, 'cbar') and self.cbar is not None:
