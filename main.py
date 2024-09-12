@@ -374,7 +374,8 @@ class App(customtkinter.CTk):
     # generator for input boxes as they are not limited
     def render_input_boxes(self, input_boxes={}): 
         self.destroy_input_boxes() # destroy previous input boxes
-        if len(input_boxes) == 0: # If there are no parameters in the function, we just plot the graph
+        # If there are no parameters in the function, we just plot the graph
+        if len(input_boxes) == 0: 
             self.inputs = dict()
             self.graph_frame.plot(self.flag)
             return

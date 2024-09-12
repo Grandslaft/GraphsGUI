@@ -7,6 +7,7 @@ def heatmap(X, Y, Z, row_labels=None, col_labels=None, ax=None,
 
     if cbar_kw is None:
         cbar_kw = {}
+    
     # Plot the heatmap
     im = ax.pcolormesh(X, Y, Z, shading='auto', **kwargs)
 
@@ -15,6 +16,7 @@ def heatmap(X, Y, Z, row_labels=None, col_labels=None, ax=None,
     cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
     return im, cbar
 
+# line breaks a string if it exceeds wraplength characters length
 def wrap_text(text, wraplength):
     words = text.split()
     wrapped_text = ""
@@ -22,7 +24,8 @@ def wrap_text(text, wraplength):
     newline_count = 0
 
     for word in words:
-        if line_length + len(word) + 1 > wraplength:
+        current_length = line_length + len(word) + 1
+        if current_length > wraplength:
             wrapped_text += "\n" + word
             line_length = len(word)
             newline_count += 1

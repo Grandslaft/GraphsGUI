@@ -103,7 +103,7 @@ class GraphFrame(customtkinter.CTkFrame):
         self.result_queue = multiprocessing.Queue() # A queue is used to store results from the process, as they could be lost otherwise
 
     # check if all required parameters are available
-    def params_check(self):
+    def params_validation(self):
         try:
             for key in self.current_function['required_params']:
                 self.params.get(key)
@@ -158,6 +158,7 @@ class GraphFrame(customtkinter.CTkFrame):
     def plot(self, fun_num, **kwargs): 
         self.current_function = self.master.functions[fun_num] # store called function
         self.params = kwargs # store parameters
+        self.params_validation() # parameters validation, if there are all needed for current function
         # create a process
         process = multiprocessing.Process(
             target=run_in_process, 
