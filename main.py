@@ -48,52 +48,118 @@ function: The function to be called to generate the graph.
 
 default_file_name: The default name for the files to be saved, which can be either a text string or a lambda function that generates the name based on the input parameters.
 '''
+
 functions = [
     dict(
         button_name = "Фазова діаграма для сплаву Fe-Cr-Al у рівноважних умовах",
         params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
-        graph_title = lambda xAl: "Фазова діаграма для сплаву Fe-Cr" if xAl < 1E-5 else f"Фазова діаграма для сплаву Fe-Cr-{xAl*100}Al",
-        graph_type = "lines",
+        graph_sublots=dict(
+            nrows=2,
+            ncols=2
+        ),
+        graph_title = [
+            'Просторовий розподіл Хрому', 
+            'Просторовий розподіл Алюмінію', 
+            'Еволюція середнього розміру преципітатів Хрому', 
+            'Еволюція густини преципітатів Хрому'
+        ],
+        graph_type = [
+            'heatmap',
+            'heatmap',
+            'lines',
+            'lines'
+        ],
         required_params = dict(
-            xAl = 0.0,
+            Cr0 = 0.3,
+            Al0 = 0.05,
+            T = 710,
+            max_t = 1000,
+            write_every_t = 200,
+            Size = 64,
         ),
-        axis_titles = {
-            "x_label": "xCr [%]", 
-            "y_label": "T [K]"
-        },
-        scale = None,
-        lim = dict(
-            x=(gp.INNER_PAD, 90),
-            y=None
-        ),
+        axis_titles = [
+            [None, None],
+            [None, None],
+            ['Time [hours]', '<Rp> [nm]'],
+            ['Time [hours]', 'N x 10^(-27) [m^-3]']
+        ],
+        scale = [
+            ['linear', 'linear'],
+            ['linear', 'linear'],
+            ['log', 'log'],
+            ['log', 'log'],
+        ],
+        lim = [
+            [None, None],
+            [None, None],
+            [None, None],
+            [None, None],
+        ],
         function = FeCr_phase_graph,
-        default_file_name = lambda xAl: "T(xCr)_Al" if xAl < 1E-5 else f"T(xCr)_Al{xAl*100}%"
+        name_start = [
+            'Cr(r)',
+            'Al(r)'
+        ],
+        prec_col_name = 'Time [hours]',
+        default_file_name = lambda name_start, Size, time, Cr0, Al0, T: f"{name_start}{int(Size)}_t{int(time)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}",
+        folder_name = lambda Size, Cr0, Al0, T: f"M{int(Size)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}"
     ),
     dict(
         button_name = "Фазова діаграма для опроміненого сплаву Fe-Cr-Al",
         params_explanation = "Введіть параметри xCr, xAl (від 0 до 0.2), N (Натуральне число), r0 (Натуральне число)",
-        graph_title = lambda xCr, xAl: f"Фазова діаграма для сплаву Fe-{xCr*100}%Cr-{xAl*100}%Al",
-        graph_type = "lines",
+        graph_sublots=dict(
+            nrows=2,
+            ncols=2
+        ),
+        graph_title = [
+            'Просторовий розподіл Хрому', 
+            'Просторовий розподіл Алюмінію', 
+            'Еволюція середнього розміру преципітатів Хрому', 
+            'Еволюція густини преципітатів Хрому'
+        ],
+        graph_type = [
+            'heatmap',
+            'heatmap',
+            'lines',
+            'lines'
+        ],
         required_params = dict(
-            xCr = 0.3,
-            xAl = 0.05,
+            Cr0 = 0.3,
+            Al0 = 0.05,
+            T = 710,
+            K = 1E-6,
             N = 30,
-            r0 = 4,
+            r0 = 1,
+            max_dose = 6,
+            write_every_dose = 1,
+            Size = 64,
         ),
-        axis_titles = {
-            "x_label": "T [K]", 
-            "y_label": "K [dpa/sec]"
-        },
-        scale = dict(
-            x = 'linear',
-            y = 'log'
-        ),
-        lim = dict(
-            x=None,
-            y=(1E-8, 1E-4)
-        ),
+        axis_titles = [
+            [None, None],
+            [None, None],
+            ['Dose [dpa]', '<Rp> [nm]'],
+            ['Dose [dpa]', 'N x 10^(-27) [m^-3]']
+        ],
+        scale = [
+            ['linear', 'linear'],
+            ['linear', 'linear'],
+            ['log', 'log'],
+            ['log', 'log'],
+        ],
+        lim = [
+            [None, None],
+            [None, None],
+            [None, None],
+            [None, None],
+        ],
         function = FeCrAl_phase_graph,
-        default_file_name = lambda xCr, xAl, N, r0: f"K(T)_Cr{xCr*100}%Al{xAl*100}%_N{N}_r0{r0}"
+        name_start = [
+            'Cr(r)',
+            'Al(r)'
+        ],
+        precipitates_prefix = 'Dose [dpa]',
+        default_file_name = lambda name_start, Size, time, Cr0, Al0, T, K, N, r0: f"{name_start}{int(Size)}_t{int(time)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}_K{int(K)*1e6}E-6_N{int(N)}_r0{int(r0)}",
+        folder_name = lambda Size, Cr0, Al0, T: f"M{int(Size)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}",
     ),
 ]
 
@@ -103,10 +169,11 @@ class App(customtkinter.CTk):
         super().__init__()
         
         self.functions = functions
-
+        self.save_path = ''
+        
         # configure window
         self.title("Графіки")
-        self.geometry(f"{1280}x{720}")
+        self.geometry(f"{1500}x{720}")
         
 
         # configure grid layout (3x3)
@@ -119,7 +186,7 @@ class App(customtkinter.CTk):
         self.sidebar_frame = customtkinter.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar_frame.grid(
             row=0, column=0, 
-            rowspan=3, 
+            rowspan=4, 
             sticky="nsew"
         )
         self.sidebar_frame.grid_rowconfigure((2), weight=1)
@@ -208,6 +275,8 @@ class App(customtkinter.CTk):
             self.sidebar_frame, 
             values=["Системна", "Світла", "Темна"],
             corner_radius=gp.CORNER_RADIUS,
+            dropdown_fg_color=["#e6e7ed", "#1a1b26"],
+            dropdown_hover_color=["#325882", "#324578"],
             command=self.change_appearance_mode_event
         )
         self.appearance_mode_optionemenu.grid(
@@ -268,26 +337,38 @@ class App(customtkinter.CTk):
         self.input_frame = customtkinter.CTkFrame(
             self, 
             fg_color=["#d6d8df", "#1a1b26"],
-            corner_radius=gp.CORNER_RADIUS)
+            corner_radius=gp.CORNER_RADIUS
+        )
         self.input_frame.grid(
             row=1, column=1, 
             padx=(gp.OUTER_PAD, 0), 
             pady=(gp.OUTER_PAD, 0), 
             sticky="nsew"
         )
+        
+        self.export_check = customtkinter.CTkCheckBox(
+            self, text="Експортувати Файли", 
+            command=self.if_export_clicked,
+            onvalue=True, offvalue=False  # Set onvalue to True and offvalue to False
+        )
+        self.export_check.grid(
+            row=2, column=1, 
+            padx=(gp.OUTER_PAD, 0), 
+            pady=(gp.OUTER_PAD, gp.OUTER_PAD), 
+            sticky="nsew"
+        )
 
         # update and export buttons
         self.function_buttons_frame = customtkinter.CTkFrame(self, fg_color='transparent')
         self.function_buttons_frame.grid(
-            row=2, column=1, 
+            row=3, column=1, 
             padx=(gp.OUTER_PAD, 0), 
             pady=(gp.OUTER_PAD, gp.OUTER_PAD), 
             sticky="nsew"
         )
         self.update_button = customtkinter.CTkButton(
             master=self.function_buttons_frame, 
-            text='Оновити', fg_color="transparent", 
-            border_width=2, text_color=("gray10", "#DCE4EE"), 
+            text='Оновити',
             corner_radius=gp.CORNER_RADIUS,
             command=self.update_figure
         )
@@ -297,14 +378,14 @@ class App(customtkinter.CTk):
             sticky="ew"
         )
         
-        self.export = customtkinter.CTkButton(
+        self.export_button = customtkinter.CTkButton(
             master=self.function_buttons_frame, 
-            text='Експортувати', fg_color="transparent", 
-            border_width=2, text_color=("gray10", "#DCE4EE"), 
+            text='Експортувати',
             corner_radius=gp.CORNER_RADIUS,
-            command=self.export_files
+            state='normal' if self.export_check.get() else 'disabled',
+            command=self.open_export_config
         )
-        self.export.grid(row=0, column=1, sticky="ew")
+        self.export_button.grid(row=0, column=1, sticky="ew")
         
         self.export_window = None
         
@@ -318,7 +399,7 @@ class App(customtkinter.CTk):
             row=0, column=2, 
             padx=gp.OUTER_PAD, 
             pady=(gp.OUTER_PAD, 0), 
-            sticky="nsew", rowspan=2
+            sticky="nsew", rowspan=3
         )
         
         # Progress Bar for calculations
@@ -330,7 +411,7 @@ class App(customtkinter.CTk):
         )
         self.eval_progress_bar.set(0)
         self.eval_progress_bar.grid(
-            row=2, column=2, 
+            row=3, column=2, 
             padx=gp.OUTER_PAD, 
             pady=gp.OUTER_PAD, 
             sticky="ew"
@@ -343,8 +424,7 @@ class App(customtkinter.CTk):
 
     # Appearance changer
     def change_appearance_mode_event(self, new_appearance_mode: str):
-        
-        theme_map = {           # dict to translate parameters
+        theme_map = {  # dict to translate parameters
             "Світла": "Light",
             "Темна": "Dark",
             "Системна": "System"
@@ -354,6 +434,7 @@ class App(customtkinter.CTk):
         gp.Light_mode(theme_map[new_appearance_mode]) # change global parameter to change others' appearance
         # Reset Graph Frame
         matplotlib.pyplot.close(self.graph_frame.fig)
+        self.graph_frame.toolbar.destroy()
         self.graph_frame = GraphFrame(
             self, 
             fg_color=["#d6d8df", "#1a1b26"],
@@ -363,7 +444,7 @@ class App(customtkinter.CTk):
             row=0, column=2, 
             padx=gp.OUTER_PAD, 
             pady=(gp.OUTER_PAD, 0), 
-            sticky="nsew", rowspan=2
+            sticky="nsew", rowspan=3
         )
 
     # Window's scale changer
@@ -413,35 +494,67 @@ class App(customtkinter.CTk):
         for widget in self.input_frame.winfo_children():
             widget.destroy()
     
+    def if_export_clicked(self):
+        if self.export_check.get():
+            self.export_button.configure(state='normal')
+            return
+        self.export_button.configure(state='disabled')
+
     # handler for the button click, which calls 
     def function_call(self, graph, function_number):
         self.flag = function_number # flag to know what function's been called
+        self.graph_frame.clear_canvas() # clear figure canvas
         self.param_expl_box.configure(text=graph["params_explanation"]) # change a content of the label, that explains parameters
         self.graph_frame.label.configure(text=graph["button_name"]) # change title of the figure to the default(button's) name
-        self.graph_frame.clear_canvas() # clear figure canvas
+        self.eval_progress_bar.set(0) # set progress bar to 0
         self.render_input_boxes(graph["required_params"]) # render input boxes
     
+    # def if_export_is_invalid():
+        
     # action on the click of 'update' button
     def update_figure(self):
+        if self.export_check.get() and self.save_path == '':
+            self.param_expl_box.configure(
+                text='Налаштуйте експорт',
+                text_color="red"
+            )
+            return
         self.graph_frame.clear_canvas() # clear figure canvas
+        self.param_expl_box.configure(text=self.functions[self.flag]["params_explanation"],)
         # if there're parameters, we plot a figure
         if len(self.functions[self.flag]['required_params']) == 0:
             self.graph_frame.plot(self.flag)
-        # If no, we check if all value are numbers. If so, we plot a figure with its parameters
+        # If no, we check if all values are numbers. If so, we plot a figure with its parameters
         try:
             params = dict()
             for key, value in self.inputs.items():
-                params[key] = float(value.get())
+                param_value = value.get() # get parameter's value
+                if param_value == '': # if empty aka user didn't specified 
+                    param_value = value._placeholder_text # get standart value from the placeholder of entry
+                params[key] = float(param_value) # transform to float
             self.graph_frame.plot(self.flag, **params)                
-        except ValueError as e:
-            self.param_expl_box.configure(text=f"Невірне значення параметру {e}")
+        except ValueError as e: # if value cannont be transformed into float, raise an error
+            self.param_expl_box.configure(
+                text=f"Невірне значення параметру {e}",
+                text_color="red"
+            )
             
     # export window caller
-    def export_files(self):
+    def open_export_config(self):
         # if there's no export window, we create one
         if self.export_window is None or not self.export_window.winfo_exists():
-            self.toplevel_window = ExportWindow(self)
-        self.toplevel_window.focus()  # if window exists focus it
+            self.export_window = ExportWindow(self)
+        self.export_window.focus()  # if window exists focus it
+    
+    # save export configuration
+    def get_export_params(self):
+        self.save_path = self.export_window.path_text_box.get("1.0", "end-1c")
+        self.files_to_save = dict(
+            png = self.export_window.graph_export.get(),
+            xyz = self.export_window.file_export_xyz.get(),
+            vtk = self.export_window.file_export_vtk.get(),
+        )
+        self.export_window.destroy()
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
