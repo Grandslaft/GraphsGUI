@@ -2,7 +2,6 @@ from tkinter import filedialog
 import customtkinter
 
 import src.global_parameters as gp
-
 # export window class on the base of Top Level window customtkinter.CTkToplevel
 class ExportWindow(customtkinter.CTkToplevel):
     def __init__(self, master, **kwargs):
@@ -16,7 +15,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         # if there's default directory, choose it
         self.master.save_path = gp.CURRENT_DIR
         
-        # Create label that will act as the title
+        # label that will act as the title
         self.label = customtkinter.CTkLabel(
             self, text="Експорт графіків та розрахованих значень",
             anchor='center',
@@ -74,6 +73,7 @@ class ExportWindow(customtkinter.CTkToplevel):
             sticky='nsew'
         )
         
+        # frame with data types available for extraction
         self.data_to_save = customtkinter.CTkFrame(
             self, 
             fg_color=["#d6d8df", "#1a1b26"],
@@ -126,7 +126,7 @@ class ExportWindow(customtkinter.CTkToplevel):
             sticky="nsew"
         )
         
-        # save export params
+        # save export parameters button
         self.save_export_params = customtkinter.CTkButton(
             self,
             text='Зберегти параметри експорту',
@@ -137,18 +137,10 @@ class ExportWindow(customtkinter.CTkToplevel):
             padx=gp.OUTER_PAD, pady=(0, gp.OUTER_PAD), 
             sticky='nsew'
         )
-        
     
-    # function, that writes data into the file
-    def write_data_to_file(fname, x, y):
-        f = open(fname, "w")
-        for i in range(len(x)):
-            line = str(x[i]) + '\t' + str(y[i]) + '\n'
-            f.write(line)
-        f.close()
-    
+    # function which is triggered by text change event in the textbox
     def on_text_change(self, event=None):
-        self.master.save_path = self.path_text_box.get("1.0", "end-1c")  # Get all text
+        self.master.save_path = self.path_text_box.get("1.0", "end-1c")  # Save all the text in the path
     
     def select_path(self):
         # function to open a dialog window for choosing the save directory, specifying the file name, and selecting the file type
@@ -156,38 +148,7 @@ class ExportWindow(customtkinter.CTkToplevel):
             initialdir=self.master.save_path,
             title="Оберіть місце збереження даних"
         )
+        if file_path == '': # if window was closed, end function
+            return
         self.path_text_box.delete("0.0", "end")
         self.path_text_box.insert("0.0", file_path)
-        if file_path == '': # if window was closed, end function
-            return
-        
-    # save files function
-    def save_files(self):
-        # function to open a dialog window for choosing the save directory, specifying the file name, and selecting the file type
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".dat",
-            filetypes=[("DAT files", "*.dat"),
-                    ("All files", "*.*")],
-            initialfile=self.master.graph_frame.default_file_name,
-            title="Оберіть місце збереження даних"
-        )
-        if file_path == '': # if window was closed, end function
-            return
-        # if there only one file to export
-        if len(self.master.graph_frame.export_files) <= 1:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(self.master.graph_frame.export_files[0])
-            return
-        # if there's more than one file to export
-        for file_num, file in enumerate(self.master.graph_frame.export_files): # for every file
-            pos = file_path.rfind('.') # find last point, which indicates file type
-            new_file_path = file_path[:pos] + f'_line{file_num+1}' + file_path[pos:] # insert export number
-            with open(new_file_path, 'w', encoding='utf-8') as f: # write the file
-                f.write(file)
-    
-    # save the graph function
-    def export_graph(self, file_name):
-        # save the graph
-        self.master.graph_frame.axs.set_title(self.master.graph_frame.label.cget("text"))
-        self.master.graph_frame.fig.savefig(self.master.save_path+'/'+file_name+'.png')
-        

@@ -15,7 +15,7 @@ CURRENT_DIR = None
 # Corner radius for widgets
 CORNER_RADIUS = 10
 # outer padding (mostly horizontal)
-OUTER_PAD = 10
+OUTER_PAD = 20
 # inner padding (mostly vertical)
 INNER_PAD = 10
 # padding for same type elements

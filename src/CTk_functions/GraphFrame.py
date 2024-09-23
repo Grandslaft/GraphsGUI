@@ -30,16 +30,11 @@ def run_in_process(result_queue, func, kwargs):
 def figure_draw(func):
     def wrapper(self, *args, **kwargs):
         # Extract necessary arguments
-        data = args[0]
         subplot_ind = args[1]
         
-        # # Check if title is lambda function
-        # graph_title = self.check_if_lambda(self.current_function['graph_title'])
-        # self.label.configure(text=graph_title)  # Change title
+        self.axs[subplot_ind].set_title(self.current_function['graph_titles'][subplot_ind])
         
-        self.axs[subplot_ind].set_title(self.current_function['graph_title'][subplot_ind])
-        
-        # Execute the plotting function (the actual plot)
+        # Execute the plotting function
         func(self, *args, **kwargs)
 
         # Change axis titles
@@ -59,7 +54,7 @@ def figure_draw(func):
 
         # Draw the figure and update the widget
         self.graph.draw()  # Draw the figure
-        self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)  # Create a widget
+        # self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)  # Create a widget
     
     return wrapper
     
@@ -109,8 +104,8 @@ class GraphFrame(customtkinter.CTkFrame):
             plt.style.use(os.path.join(gp.CURRENT_DIR, 'src', 'styles', 'pitayasmoothie-dark.mplstyle'))
         
         # create figure
-        self.fig = Figure(figsize=(8, 5.5),dpi=100, constrained_layout=True)
-        self.gs = matplotlib.gridspec.GridSpec(1, 1, figure=self.fig)
+        self.fig = Figure(figsize=(8, 5.4) ,dpi=100)
+        self.gs = matplotlib.gridspec.GridSpec(1, 1, figure=self.fig, left=0.05, right=0.95, top=0.99, bottom=0.05)
         self.axs = []
         self.axs.append(self.fig.add_subplot(self.gs[0]))
         self.cbars = []
@@ -189,7 +184,7 @@ class GraphFrame(customtkinter.CTkFrame):
             text=text,
             text_color=["gray14", "gray84"]
         )
-        # # clear color bar if there is any (for heatmap)
+        # clear color bars if there are any (for heatmaps)
         for cbar in self.cbars:
             if cbar:
                 cbar.remove()
@@ -210,16 +205,22 @@ class GraphFrame(customtkinter.CTkFrame):
         self.params_validation() # parameters validation, if there are all needed for current function
         # save num of rows and cols for subplots 
         self.nrows, self.ncols = self.current_function['graph_sublots']['nrows'], self.current_function['graph_sublots']['ncols']
-        self.gs = matplotlib.gridspec.GridSpec(2, 2, figure=self.fig)
+        # subplots grid
+        self.gs = matplotlib.gridspec.GridSpec(2, 2, figure=self.fig, left=0.08, right=0.98, top=0.95, bottom=0.05, hspace=0.2)
+        # lists for plots and cbars
         self.axs = []
         self.cbars = []
+        # Graph title
         self.label.configure(text=self.current_function['button_name'])
+        # end of calculation
         self.end_iter = [value for key, value in self.params.items() if 'max_' in key][0]
+        # export files every {specified value}
         self.every_iter = [value for key, value in self.params.items() if 'write_every_' in key][0]
+        # flag which tells when to save files
         self.time_to_save = self.every_iter
-        
+        # add folder's name to save path
         folder_name = self.check_if_lambda(self.current_function['folder_name'])
-        self.master.save_path += '/' + folder_name
+        self.functions_save_path = os.path.join(self.master.save_path, folder_name)
         # create a process
         process = multiprocessing.Process(
             target=run_in_process, 
@@ -242,21 +243,21 @@ class GraphFrame(customtkinter.CTkFrame):
         
         self.export_files(iteration, data)
     
-    
-    # Apply the decorator to the draw_plot method
+    # Decorator on the plot function
     @figure_draw
     def draw_plot(self, data, subplot_ind):
-        """This function handles the actual plotting logic."""
-        match self.current_function['graph_type'][subplot_ind]:  # match/case to call the right plot function
-            case 'lines':
+        # plot logic
+        match self.current_function['graph_types'][subplot_ind]:  # match/case to call the right plot function
+            case 'lines': # in case its a lines plot
                 for coord_group in range(0, int(len(data) / 2)):
                     # Create first group
                     x = data[0 + 2 * coord_group]
                     y = data[1 + 2 * coord_group]
-                    
-                    self.axs[subplot_ind].plot(x, y)  # Plot the line
-            case 'heatmap':
-                im_size = int(self.params['Size'])
+                    # Plot the line
+                    self.axs[subplot_ind].plot(x, y)  
+            case 'heatmap': # in case it's a heatmap
+                im_size = int(self.params['Size']) # extract image size
+                # plot a heatmap
                 im = self.axs[subplot_ind].imshow(data.reshape(im_size, im_size), cmap='coolwarm')
 
                 # Create colorbar
@@ -266,29 +267,41 @@ class GraphFrame(customtkinter.CTkFrame):
                 # cbar.ax.set_ylabel(cbarlabel, rotation=-90, va="bottom")
     
     def check_if_path_is_valid(self):
-        if os.path.isdir(self.master.save_path):
+        # if path is valid, end program
+        if os.path.isdir(self.functions_save_path):
             return
-        os.makedirs(self.master.save_path)
-        
+        # if not create a folder
+        os.makedirs(self.functions_save_path)
+    
     def export_files(self, iteration, data):
         self.check_if_path_is_valid()
-        if self.master.export_check.get() and iteration >= self.time_to_save: # if its time to write
-            for ind, ax in enumerate(self.axs[:2]):
+        if self.master.export_check.get() and iteration >= self.time_to_save: # if the user requested an export and it's time to write
+            # save all the heatmap plots positions
+            heatmap_plots = [(i, x) for i, x in enumerate(self.axs) if self.current_function['graph_types'][i] == 'heatmap']
+            for ind, ax in heatmap_plots: # for all heatmaps
+                # update params for export files names
                 self.params['name_start'] = self.current_function['name_start'][ind]
                 self.params['time'] = int(iteration)
+                # create file name
                 file_name = self.check_if_lambda(self.current_function['default_file_name'])
-                save_path = f"{self.master.save_path}/{file_name}"
-                if self.master.files_to_save['png']:
+                # complete save path
+                save_path = os.path.join(self.functions_save_path, file_name)
+                if self.master.files_to_save['png']: # if save plot is requested
                     extent = ax.get_tightbbox(self.fig.canvas.renderer).transformed(self.fig.dpi_scale_trans.inverted())
-                    self.fig.savefig(f'{save_path}.png', bbox_inches=extent.expanded(1.5, 1))
-                if self.master.files_to_save['xyz']:
+                    # Expand the width by 1.1 times and keep the height the same
+                    expanded_extent = extent.expanded(1.25, 1)
+                    # Translate the bounding box to the right by half of the additional width
+                    translated_extent = expanded_extent.translated(extent.width * 0.5 * (1.25 - 1), 0)
+                    self.fig.savefig(f'{save_path}.png', bbox_inches=translated_extent)
+                if self.master.files_to_save['xyz']: # if save plot data in xyz is requested
                     write_data_to_xyz_file(f'{save_path}.xyz', data[ind], self.params['Size'])
-                if self.master.files_to_save['vtk']:
+                if self.master.files_to_save['vtk']: # if save plot data in vtk is requested
                     write_data_to_vtk_file(f'{save_path}.vtk', data[ind], self.params['Size'])
             self.time_to_save += self.every_iter
         
-            if iteration == self.end_iter:
+            if iteration == self.end_iter: # if its the end of calculations
                 self.params['name_start'] = 'Prec'
                 file_name = self.check_if_lambda(self.current_function['default_file_name'])
-                save_path = f"{self.master.save_path}/{file_name}"
+                save_path = os.path.join(self.functions_save_path, file_name)
                 save_precipitates(f'{save_path}.dat', self.current_function['prec_col_name'], data[2][0], data[2][1], data[3][1])
+                os.startfile(self.master.save_path)

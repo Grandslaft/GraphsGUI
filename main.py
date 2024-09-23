@@ -28,25 +28,33 @@ customtkinter.set_default_color_theme(os.path.join(gp.CURRENT_DIR, 'src', 'style
 '''
 Explained Parameters of the Functions Dictionary Needed for Adding New Graphs to the GUI
 
-button_name: The name displayed on the button that triggers the function.
+button_name: The label displayed on the button and used as the Graph Widget's title.
 
-params_explanation: A brief explanation of the parameters required for the function.
+params_explanation: A brief explanation of the required parameters for the function.
 
-graph_title: The title of the graph, which can be either a text string or a lambda function that generates the title based on the input parameters.
+graph_sublots: Defines the layout of subplots (rows and columns).
 
-graph_type: The type of graph to be generated (e.g., “lines”).
+graph_titles: A list of titles for individual graphs, either static or dynamically generated.
 
-required_params: A dictionary of parameters required by the function, with default values.
+graph_types: Specifies the type of graph (e.g., lines, heatmap).
 
-axis_titles: Titles for the x and y axes of the graph.
+required_params: A dictionary of required parameters with default values.
 
-scale: A dictionary specifying the scale of the axes (e.g., 'linear', 'log').
+axis_titles: Titles for the x and y axes of the graphs.
 
-lim: A dictionary specifying the limits for the x and y axes.
+scale: Defines the scale for both x and y axes (e.g., linear, log).
 
-function: The function to be called to generate the graph.
+lim: Specifies axis limits; None if no specific limit is required.
 
-default_file_name: The default name for the files to be saved, which can be either a text string or a lambda function that generates the name based on the input parameters.
+function: The function that generates the graph.
+
+name_start: The prefix for saving heatmap plot data.
+
+prec_col_name: The prefix for saving precipitate-related data.
+
+folder_name: Defines the folder name for saving files, static or dynamically generated.
+
+default_file_name: The default file name for saving output, static or dynamically generated.
 '''
 
 functions = [
@@ -57,13 +65,13 @@ functions = [
             nrows=2,
             ncols=2
         ),
-        graph_title = [
+        graph_titles = [
             'Просторовий розподіл Хрому', 
             'Просторовий розподіл Алюмінію', 
             'Еволюція середнього розміру преципітатів Хрому', 
             'Еволюція густини преципітатів Хрому'
         ],
-        graph_type = [
+        graph_types = [
             'heatmap',
             'heatmap',
             'lines',
@@ -101,8 +109,8 @@ functions = [
             'Al(r)'
         ],
         prec_col_name = 'Time [hours]',
+        folder_name = lambda Size, Cr0, Al0, T: f"M{int(Size)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}",
         default_file_name = lambda name_start, Size, time, Cr0, Al0, T: f"{name_start}{int(Size)}_t{int(time)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}",
-        folder_name = lambda Size, Cr0, Al0, T: f"M{int(Size)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}"
     ),
     dict(
         button_name = "Фазова діаграма для опроміненого сплаву Fe-Cr-Al",
@@ -111,13 +119,13 @@ functions = [
             nrows=2,
             ncols=2
         ),
-        graph_title = [
+        graph_titles = [
             'Просторовий розподіл Хрому', 
             'Просторовий розподіл Алюмінію', 
             'Еволюція середнього розміру преципітатів Хрому', 
             'Еволюція густини преципітатів Хрому'
         ],
-        graph_type = [
+        graph_types = [
             'heatmap',
             'heatmap',
             'lines',
@@ -158,8 +166,8 @@ functions = [
             'Al(r)'
         ],
         precipitates_prefix = 'Dose [dpa]',
+        folder_name = lambda Size, Cr0, Al0, T, K, N, r0: f"M{int(Size)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}_K{int(K)*1e6}E-6_N{int(N)}_r0{int(r0)}",
         default_file_name = lambda name_start, Size, time, Cr0, Al0, T, K, N, r0: f"{name_start}{int(Size)}_t{int(time)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}_K{int(K)*1e6}E-6_N{int(N)}_r0{int(r0)}",
-        folder_name = lambda Size, Cr0, Al0, T: f"M{int(Size)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}",
     ),
 ]
 
@@ -175,10 +183,10 @@ class App(customtkinter.CTk):
         self.title("Графіки")
         self.geometry(f"{1500}x{720}")
         
-
         # configure grid layout (3x3)
-        self.grid_columnconfigure((0, 1), weight=0)
-        self.grid_columnconfigure(2, weight=1)
+        self.grid_columnconfigure((0), weight=0)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=2)
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=1)
 
@@ -306,7 +314,7 @@ class App(customtkinter.CTk):
             command=self.change_scaling_event
         )
         self.scaling_optionemenu.grid(
-            row=gp.ELEMENTS_PAD, column=0, 
+            row=6, column=0, 
             padx=gp.OUTER_PAD, 
             pady=(gp.INNER_PAD, gp.OUTER_PAD),
             sticky='ew'
@@ -334,7 +342,7 @@ class App(customtkinter.CTk):
         )
         
         # frame for parameters' inputs
-        self.input_frame = customtkinter.CTkFrame(
+        self.input_frame = customtkinter.CTkScrollableFrame(
             self, 
             fg_color=["#d6d8df", "#1a1b26"],
             corner_radius=gp.CORNER_RADIUS
@@ -345,6 +353,7 @@ class App(customtkinter.CTk):
             pady=(gp.OUTER_PAD, 0), 
             sticky="nsew"
         )
+        self.input_frame.grid_columnconfigure((0, 1), weight=1)
         
         self.export_check = customtkinter.CTkCheckBox(
             self, text="Експортувати Файли", 
@@ -354,7 +363,7 @@ class App(customtkinter.CTk):
         self.export_check.grid(
             row=2, column=1, 
             padx=(gp.OUTER_PAD, 0), 
-            pady=(gp.OUTER_PAD, gp.OUTER_PAD), 
+            pady=(gp.OUTER_PAD, 0), 
             sticky="nsew"
         )
 
@@ -378,6 +387,7 @@ class App(customtkinter.CTk):
             sticky="ew"
         )
         
+        # Button to call export window
         self.export_button = customtkinter.CTkButton(
             master=self.function_buttons_frame, 
             text='Експортувати',
@@ -385,8 +395,8 @@ class App(customtkinter.CTk):
             state='normal' if self.export_check.get() else 'disabled',
             command=self.open_export_config
         )
+        #TODO implement import mechanic
         self.export_button.grid(row=0, column=1, sticky="ew")
-        
         self.export_window = None
         
         # Graph Frame
@@ -446,7 +456,7 @@ class App(customtkinter.CTk):
             pady=(gp.OUTER_PAD, 0), 
             sticky="nsew", rowspan=3
         )
-
+        
     # Window's scale changer
     def change_scaling_event(self, new_scaling: str):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
@@ -484,7 +494,7 @@ class App(customtkinter.CTk):
             )
             self.inputs[input_labels[inp_num]].grid(
                 row=inp_num, column=1, 
-                padx=(0, gp.INNER_PAD), 
+                padx=(0, gp.INNER_PAD*2), 
                 pady=(gp.INNER_PAD, 0), 
                 sticky="nsew"
             )
@@ -494,10 +504,12 @@ class App(customtkinter.CTk):
         for widget in self.input_frame.winfo_children():
             widget.destroy()
     
+    # if export button check is clicked
     def if_export_clicked(self):
-        if self.export_check.get():
-            self.export_button.configure(state='normal')
+        if self.export_check.get(): # is export checkbox is checked (requested)
+            self.export_button.configure(state='normal') # make export button clickable
             return
+        # if it was unchecked, make it unclickable
         self.export_button.configure(state='disabled')
 
     # handler for the button click, which calls 
@@ -508,22 +520,25 @@ class App(customtkinter.CTk):
         self.graph_frame.label.configure(text=graph["button_name"]) # change title of the figure to the default(button's) name
         self.eval_progress_bar.set(0) # set progress bar to 0
         self.render_input_boxes(graph["required_params"]) # render input boxes
-    
-    # def if_export_is_invalid():
         
     # action on the click of 'update' button
     def update_figure(self):
+        # if user requester export, but save path isn't specified
         if self.export_check.get() and self.save_path == '':
+            # raise error
             self.param_expl_box.configure(
                 text='Налаштуйте експорт',
                 text_color="red"
             )
             return
+        
         self.graph_frame.clear_canvas() # clear figure canvas
-        self.param_expl_box.configure(text=self.functions[self.flag]["params_explanation"],)
-        # if there're parameters, we plot a figure
+        self.param_expl_box.configure(
+            text=self.functions[self.flag]["params_explanation"],
+        ) # return basic text for the selected function
         if len(self.functions[self.flag]['required_params']) == 0:
-            self.graph_frame.plot(self.flag)
+            self.graph_frame.plot(self.flag) # if there're no parameters, we plot a figure
+        
         # If no, we check if all values are numbers. If so, we plot a figure with its parameters
         try:
             params = dict()
@@ -544,16 +559,20 @@ class App(customtkinter.CTk):
         # if there's no export window, we create one
         if self.export_window is None or not self.export_window.winfo_exists():
             self.export_window = ExportWindow(self)
+            
         self.export_window.focus()  # if window exists focus it
     
     # save export configuration
     def get_export_params(self):
+        # get save path
         self.save_path = self.export_window.path_text_box.get("1.0", "end-1c")
+        # get flags for what files to save
         self.files_to_save = dict(
             png = self.export_window.graph_export.get(),
             xyz = self.export_window.file_export_xyz.get(),
             vtk = self.export_window.file_export_vtk.get(),
         )
+        # close export window
         self.export_window.destroy()
 
 if __name__ == "__main__":
