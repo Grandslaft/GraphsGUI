@@ -1,5 +1,5 @@
 import tkinter as tk
-import customtkinter
+import customtkinter as ctk
 
 import matplotlib
 
@@ -21,9 +21,9 @@ matplotlib.use('TkAgg')
 
 gp.CURRENT_DIR = os.path.dirname(__file__)
 
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 gp.Light_mode('System')
-customtkinter.set_default_color_theme(os.path.join(gp.CURRENT_DIR, 'src', 'styles', 'theme.json'))
+ctk.set_default_color_theme(os.path.join(gp.CURRENT_DIR, 'src', 'styles', 'theme.json'))
 
 '''
 Explained Parameters of the Functions Dictionary Needed for Adding New Graphs to the GUI
@@ -172,7 +172,7 @@ functions = [
 ]
 
 # main window of the GUI created using custom Tkinter
-class App(customtkinter.CTk):
+class App(ctk.CTk):
     def __init__(self, functions):
         super().__init__()
         
@@ -181,17 +181,17 @@ class App(customtkinter.CTk):
         
         # configure window
         self.title("Графіки")
-        self.geometry(f"{1500}x{720}")
+        self.geometry(f"{1500}x{800}")
+        self.minsize(1500, 800)
         
         # configure grid layout (3x3)
-        self.grid_columnconfigure((0), weight=0)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_columnconfigure(2, weight=2)
+        self.grid_columnconfigure((0,1), weight=0)
+        self.grid_columnconfigure(2, weight=1)
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=1)
-
+        
         # sidebar frame for buttons and window customization
-        self.sidebar_frame = customtkinter.CTkFrame(self, width=200, corner_radius=0)
+        self.sidebar_frame = ctk.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar_frame.grid(
             row=0, column=0, 
             rowspan=4, 
@@ -202,13 +202,13 @@ class App(customtkinter.CTk):
         image_path = os.path.join(gp.CURRENT_DIR, 'src', 'images', 'sumdu_logo_v2.png')
         
         # SumDU logo
-        self.logo = customtkinter.CTkLabel(
+        self.logo = ctk.CTkLabel(
             self.sidebar_frame, 
             text='Сумський\nДержавний\nУніверситет',
-            font=customtkinter.CTkFont(
+            font=ctk.CTkFont(
                 size=14, weight="bold"
             ),
-            image=customtkinter.CTkImage(
+            image=ctk.CTkImage(
                 Image.open(image_path), 
                 size=(50, 50)
             ),
@@ -223,10 +223,10 @@ class App(customtkinter.CTk):
         )
         
         # title of the frame
-        self.sidebar_buttons_title = customtkinter.CTkLabel(
+        self.sidebar_buttons_title = ctk.CTkLabel(
             self.sidebar_frame, 
             text='Оберіть функцію',
-            font=customtkinter.CTkFont(
+            font=ctk.CTkFont(
                 size=16,
             ),
             anchor='center',
@@ -239,7 +239,7 @@ class App(customtkinter.CTk):
         )
         
         # functions' buttons frame
-        self.sidebar_buttons_frame = customtkinter.CTkScrollableFrame(
+        self.sidebar_buttons_frame = ctk.CTkScrollableFrame(
             self.sidebar_frame, 
             fg_color=["#e6e7ed", "#1a1b26"],
             corner_radius=gp.CORNER_RADIUS,
@@ -255,8 +255,8 @@ class App(customtkinter.CTk):
         # buttons generator
         self.sidebar_button = dict()
         for num, graph in enumerate(functions):
-            button_text, new_line_count = wrap_text(graph['button_name'], 20)
-            self.sidebar_button[graph['button_name']] = customtkinter.CTkButton(
+            button_text, new_line_count = wrap_text(graph['button_name'], 160, ctk.CTkButton(self))
+            self.sidebar_button[graph['button_name']] = ctk.CTkButton(
                 self.sidebar_buttons_frame, 
                 text=button_text,
                 height=28*new_line_count,
@@ -271,7 +271,7 @@ class App(customtkinter.CTk):
             )
             
         # light theme of the GUI
-        self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Тема застосунку:", anchor="w")
+        self.appearance_mode_label = ctk.CTkLabel(self.sidebar_frame, text="Тема застосунку:", anchor="w")
         self.appearance_mode_label.grid(
             row=3, column=0, 
             padx=gp.OUTER_PAD, 
@@ -279,7 +279,7 @@ class App(customtkinter.CTk):
             sticky='ew'
         )
         
-        self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(
+        self.appearance_mode_optionemenu = ctk.CTkOptionMenu(
             self.sidebar_frame, 
             values=["Системна", "Світла", "Темна"],
             corner_radius=gp.CORNER_RADIUS,
@@ -295,7 +295,7 @@ class App(customtkinter.CTk):
         )
         
         # Scaling options
-        self.scaling_label = customtkinter.CTkLabel(
+        self.scaling_label = ctk.CTkLabel(
             self.sidebar_frame, 
             text="Масштабування інтерфейсу:", 
             corner_radius=gp.CORNER_RADIUS,
@@ -307,7 +307,7 @@ class App(customtkinter.CTk):
             pady=(gp.INNER_PAD, 0),
             sticky='ew'
         )
-        self.scaling_optionemenu = customtkinter.CTkOptionMenu(
+        self.scaling_optionemenu = ctk.CTkOptionMenu(
             self.sidebar_frame, 
             values=["80%", "90%", "100%", "110%", "120%"],
             corner_radius=gp.CORNER_RADIUS,
@@ -320,12 +320,13 @@ class App(customtkinter.CTk):
             sticky='ew'
         )
         
-        # Label for parameters' explanation      
-        self.param_expl_box = customtkinter.CTkLabel(
+        # Label for parameters' explanation  
+        # A StringVar to track the label's text
+        self.param_expl_text = ctk.StringVar() 
+        self.param_expl_box = ctk.CTkLabel(
             self,
-            width=300,
-            height=200,
-            wraplength=300,
+            textvariable=self.param_expl_text,
+            height=100,
             fg_color= ["#d6d8df", "#1a1b26"],
             anchor='nw',
             justify='left',
@@ -342,7 +343,7 @@ class App(customtkinter.CTk):
         )
         
         # frame for parameters' inputs
-        self.input_frame = customtkinter.CTkScrollableFrame(
+        self.input_frame = ctk.CTkScrollableFrame(
             self, 
             fg_color=["#d6d8df", "#1a1b26"],
             corner_radius=gp.CORNER_RADIUS
@@ -355,7 +356,7 @@ class App(customtkinter.CTk):
         )
         self.input_frame.grid_columnconfigure((0, 1), weight=1)
         
-        self.export_check = customtkinter.CTkCheckBox(
+        self.export_check = ctk.CTkCheckBox(
             self, text="Експортувати Файли", 
             command=self.if_export_clicked,
             onvalue=True, offvalue=False  # Set onvalue to True and offvalue to False
@@ -368,14 +369,17 @@ class App(customtkinter.CTk):
         )
 
         # update and export buttons
-        self.function_buttons_frame = customtkinter.CTkFrame(self, fg_color='transparent')
+        self.function_buttons_frame = ctk.CTkFrame(self, fg_color='transparent')
         self.function_buttons_frame.grid(
             row=3, column=1, 
             padx=(gp.OUTER_PAD, 0), 
             pady=(gp.OUTER_PAD, gp.OUTER_PAD), 
             sticky="nsew"
         )
-        self.update_button = customtkinter.CTkButton(
+        self.function_buttons_frame.grid_columnconfigure((0, 1), weight=1)
+        self.function_buttons_frame.grid_rowconfigure(0, weight=1)
+        
+        self.update_button = ctk.CTkButton(
             master=self.function_buttons_frame, 
             text='Оновити',
             corner_radius=gp.CORNER_RADIUS,
@@ -383,12 +387,11 @@ class App(customtkinter.CTk):
         )
         self.update_button.grid(
             row=0, column=0, 
-            padx=(0, gp.OUTER_PAD), 
-            sticky="ew"
+            padx=(0, gp.INNER_PAD), 
+            sticky="nsew"
         )
         
-        # Button to call export window
-        self.export_button = customtkinter.CTkButton(
+        self.export_button = ctk.CTkButton(
             master=self.function_buttons_frame, 
             text='Експортувати',
             corner_radius=gp.CORNER_RADIUS,
@@ -396,7 +399,7 @@ class App(customtkinter.CTk):
             command=self.open_export_config
         )
         #TODO implement import mechanic
-        self.export_button.grid(row=0, column=1, sticky="ew")
+        self.export_button.grid(row=0, column=1, sticky="nsew")
         self.export_window = None
         
         # Graph Frame
@@ -413,7 +416,7 @@ class App(customtkinter.CTk):
         )
         
         # Progress Bar for calculations
-        self.eval_progress_bar = customtkinter.CTkProgressBar(
+        self.eval_progress_bar = ctk.CTkProgressBar(
             self, 
             mode='determinate', 
             height=20, 
@@ -430,7 +433,7 @@ class App(customtkinter.CTk):
         # default values
         self.appearance_mode_optionemenu.set("Системна")
         self.scaling_optionemenu.set("100%")
-        self.param_expl_box.configure(text="Оберіть граф, щоб з'явилися поля вводу")
+        self.label_text_change("Оберіть граф, щоб з'явилися поля вводу") 
 
     # Appearance changer
     def change_appearance_mode_event(self, new_appearance_mode: str):
@@ -439,7 +442,7 @@ class App(customtkinter.CTk):
             "Темна": "Dark",
             "Системна": "System"
         }
-        customtkinter.set_appearance_mode(theme_map[new_appearance_mode]) # change appearance in custom_tkinter
+        ctk.set_appearance_mode(theme_map[new_appearance_mode]) # change appearance in custom_tkinter
         
         gp.Light_mode(theme_map[new_appearance_mode]) # change global parameter to change others' appearance
         # Reset Graph Frame
@@ -460,7 +463,7 @@ class App(customtkinter.CTk):
     # Window's scale changer
     def change_scaling_event(self, new_scaling: str):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
-        customtkinter.set_widget_scaling(new_scaling_float)
+        ctk.set_widget_scaling(new_scaling_float)
     
     # generator for input boxes as they are not limited
     def render_input_boxes(self, input_boxes={}): 
@@ -475,10 +478,10 @@ class App(customtkinter.CTk):
         input_labels = list(input_boxes.keys()) # save parameters' names
         for inp_num in range(len(input_boxes)): # for each parameter
             # create label with its name
-            customtkinter.CTkLabel(
+            ctk.CTkLabel(
                 self.input_frame, 
                 text=f"{input_labels[inp_num]}:", 
-                font=customtkinter.CTkFont(
+                font=ctk.CTkFont(
                     size=14, weight="bold"
                 )
             ).grid(
@@ -488,7 +491,7 @@ class App(customtkinter.CTk):
                 sticky="w"
             )
             # and create input form
-            self.inputs[input_labels[inp_num]] = customtkinter.CTkEntry(
+            self.inputs[input_labels[inp_num]] = ctk.CTkEntry(
                 self.input_frame, 
                 placeholder_text=input_boxes[input_labels[inp_num]]
             )
@@ -498,7 +501,7 @@ class App(customtkinter.CTk):
                 pady=(gp.INNER_PAD, 0), 
                 sticky="nsew"
             )
-            
+    
     # function that destroys input boxes
     def destroy_input_boxes(self):
         for widget in self.input_frame.winfo_children():
@@ -515,8 +518,13 @@ class App(customtkinter.CTk):
     # handler for the button click, which calls 
     def function_call(self, graph, function_number):
         self.flag = function_number # flag to know what function's been called
+        # kill the ongoing calculation process, if it exists
+        if hasattr(self.graph_frame, 'process'): 
+            self.graph_frame.process.kill()
+            del self.graph_frame.process
         self.graph_frame.clear_canvas() # clear figure canvas
-        self.param_expl_box.configure(text=graph["params_explanation"]) # change a content of the label, that explains parameters
+        self.label_text_change(graph["params_explanation"])
+        # self.param_expl_box.configure(text=graph["params_explanation"]) # change a content of the label, that explains parameters
         self.graph_frame.label.configure(text=graph["button_name"]) # change title of the figure to the default(button's) name
         self.eval_progress_bar.set(0) # set progress bar to 0
         self.render_input_boxes(graph["required_params"]) # render input boxes
@@ -526,16 +534,20 @@ class App(customtkinter.CTk):
         # if user requester export, but save path isn't specified
         if self.export_check.get() and self.save_path == '':
             # raise error
+            self.label_text_change('Налаштуйте експорт')
             self.param_expl_box.configure(
-                text='Налаштуйте експорт',
                 text_color="red"
             )
             return
         
+        # kill the ongoing calculation process, if it exists
+        if hasattr(self.graph_frame, 'process'): 
+            self.graph_frame.process.kill()
+            del self.graph_frame.process
+        
         self.graph_frame.clear_canvas() # clear figure canvas
-        self.param_expl_box.configure(
-            text=self.functions[self.flag]["params_explanation"],
-        ) # return basic text for the selected function
+        # return basic text for the selected function
+        self.label_text_change(self.functions[self.flag]["params_explanation"]) 
         if len(self.functions[self.flag]['required_params']) == 0:
             self.graph_frame.plot(self.flag) # if there're no parameters, we plot a figure
         
@@ -549,8 +561,9 @@ class App(customtkinter.CTk):
                 params[key] = float(param_value) # transform to float
             self.graph_frame.plot(self.flag, **params)                
         except ValueError as e: # if value cannont be transformed into float, raise an error
+            self.label_text_change(f"Невірне значення параметру {e}")
             self.param_expl_box.configure(
-                text=f"Невірне значення параметру {e}",
+                # text=f"Невірне значення параметру {e}",
                 text_color="red"
             )
             
@@ -574,6 +587,16 @@ class App(customtkinter.CTk):
         )
         # close export window
         self.export_window.destroy()
+    
+    # function to change label's text with prior text wrapping
+    def label_text_change(self, new_text):
+        expl_box_width = self.param_expl_box.winfo_width()
+        wrapped_text, _ = wrap_text(
+            text=new_text, 
+            wraplength_px=expl_box_width - 2 * gp.ELEMENTS_PAD if expl_box_width > 50 else 300, 
+            obj=self.param_expl_box
+        )
+        self.param_expl_text.set(wrapped_text)
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()

@@ -1,26 +1,48 @@
 import matplotlib.pyplot as plt
+import tkinter as tk
+
+def get_label_font(obj):
+    # Get the font object from the label
+    font_obj = tk.font.Font(font=obj.cget("font"))
+    
+    # Extract the family (font name) and size from the font object
+    font_family = font_obj.cget("family")
+    font_size = font_obj.cget("size")
+    
+    # Return the font in the desired format
+    return (font_family, font_size)
 
 # line breaks a string if it exceeds wraplength characters length
-def wrap_text(text, wraplength):
+def wrap_text(text, wraplength_px, obj):
     words = text.split()
     wrapped_text = ""
     line_length = 0
     newline_count = 0
 
+    # Create a Font object for measuring text width
+    label_font = get_label_font(obj)
+    fnt = tk.font.Font(font=label_font)
+
     for word in words:
-        current_length = line_length + len(word) + 1
-        if current_length > wraplength:
+        # Measure the pixel width of the word
+        word_width = fnt.measure(word)
+        space_width = fnt.measure(' ')
+        current_length = line_length + word_width + space_width
+
+        # If the current word exceeds the wraplength, move it to a new line
+        if current_length > wraplength_px:
             wrapped_text += "\n" + word
-            line_length = len(word)
+            line_length = word_width  # Start counting the length for the new line
             newline_count += 1
         else:
             if wrapped_text:
                 wrapped_text += " " + word
             else:
                 wrapped_text = word
-            line_length += len(word) + 1
+            line_length += word_width + space_width
 
     return wrapped_text, newline_count
+
 
 def saveImageFile(fname, data, Size):
     plt.imsave(fname, data.reshape(Size, Size), cmap='coolwarm')

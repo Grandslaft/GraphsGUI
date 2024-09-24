@@ -1,13 +1,15 @@
 from tkinter import filedialog
-import customtkinter
+import customtkinter as ctk
 
 import src.global_parameters as gp
-# export window class on the base of Top Level window customtkinter.CTkToplevel
-class ExportWindow(customtkinter.CTkToplevel):
+
+# export window class on the base of Top Level window ctk.CTkToplevel
+class ExportWindow(ctk.CTkToplevel):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.title("Вікно експорту")
         self.geometry("500x400") # window size
+        self.minsize(500, 400)
         self.grab_set() # focus on this window
         self.grid_rowconfigure((1,2,3), weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -16,10 +18,10 @@ class ExportWindow(customtkinter.CTkToplevel):
         self.master.save_path = gp.CURRENT_DIR
         
         # label that will act as the title
-        self.label = customtkinter.CTkLabel(
+        self.label = ctk.CTkLabel(
             self, text="Експорт графіків та розрахованих значень",
             anchor='center',
-            font=customtkinter.CTkFont(
+            font=ctk.CTkFont(
                 size=20, weight="bold"
             )
         ) 
@@ -30,7 +32,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         )
         
         # select path frame
-        self.select_path_frame = customtkinter.CTkFrame(
+        self.select_path_frame = ctk.CTkFrame(
             self, 
             fg_color=["#d6d8df", "#1a1b26"],
             corner_radius=gp.CORNER_RADIUS
@@ -44,7 +46,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         self.select_path_frame.grid_columnconfigure((0), weight=1)
         
         # textbox that will show current save path
-        self.path_text_box = customtkinter.CTkTextbox(
+        self.path_text_box = ctk.CTkTextbox(
             self.select_path_frame,
             height=28,
             activate_scrollbars=True,
@@ -62,7 +64,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         )
         
         # button to call a window to choose directory
-        self.choose_path = customtkinter.CTkButton(
+        self.choose_path = ctk.CTkButton(
             self.select_path_frame,
             text='Експортувати файли',
             command=self.select_path
@@ -74,7 +76,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         )
         
         # frame with data types available for extraction
-        self.data_to_save = customtkinter.CTkFrame(
+        self.data_to_save = ctk.CTkFrame(
             self, 
             fg_color=["#d6d8df", "#1a1b26"],
             corner_radius=gp.CORNER_RADIUS
@@ -88,7 +90,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         self.data_to_save.grid_columnconfigure((0), weight=1)
         
         # graph save checkbox
-        self.graph_export = customtkinter.CTkCheckBox(
+        self.graph_export = ctk.CTkCheckBox(
             self.data_to_save, 
             text="Експортувати рисунки", 
             onvalue=True, offvalue=False
@@ -101,7 +103,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         )
         
         # file save checkbox .xyz
-        self.file_export_xyz = customtkinter.CTkCheckBox(
+        self.file_export_xyz = ctk.CTkCheckBox(
             self.data_to_save, 
             text="Експортувати файли у .xyz", 
             onvalue=True, offvalue=False
@@ -114,7 +116,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         )
         
         # file save checkbox .vtk
-        self.file_export_vtk = customtkinter.CTkCheckBox(
+        self.file_export_vtk = ctk.CTkCheckBox(
             self.data_to_save, 
             text="Експортувати файли у .vtk", 
             onvalue=True, offvalue=False
@@ -127,7 +129,7 @@ class ExportWindow(customtkinter.CTkToplevel):
         )
         
         # save export parameters button
-        self.save_export_params = customtkinter.CTkButton(
+        self.save_export_params = ctk.CTkButton(
             self,
             text='Зберегти параметри експорту',
             command=self.master.get_export_params

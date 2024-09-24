@@ -1,10 +1,8 @@
 import tkinter as tk
-import customtkinter
+import customtkinter as ctk
 import os
 
 import matplotlib
-import matplotlib.axes
-import matplotlib.colorbar as cbar
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
@@ -20,7 +18,7 @@ import src.global_parameters as gp
 
 matplotlib.use('TkAgg')
 
-AWAIT_TIME = 200
+AWAIT_TIME = 100
 
 # function to run calculations in the external process
 def run_in_process(result_queue, func, kwargs):
@@ -76,8 +74,8 @@ class CustomToolbar(NavigationToolbar2Tk):
             for button in self.winfo_children():
                 button.config(background="#385091")
 
-# main class for the frame with graph on the base of customtkinter.CTkFrame
-class GraphFrame(customtkinter.CTkFrame):
+# main class for the frame with graph on the base of ctk.CTkFrame
+class GraphFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         # change corner radius
@@ -86,10 +84,10 @@ class GraphFrame(customtkinter.CTkFrame):
         self.current_function = None
         
         # label with the graph's name
-        self.label = customtkinter.CTkLabel(
+        self.label = ctk.CTkLabel(
             self, 
             text='СумДУ',
-            font=customtkinter.CTkFont(
+            font=ctk.CTkFont(
                 size=14,
             ),
         )
@@ -104,8 +102,13 @@ class GraphFrame(customtkinter.CTkFrame):
             plt.style.use(os.path.join(gp.CURRENT_DIR, 'src', 'styles', 'pitayasmoothie-dark.mplstyle'))
         
         # create figure
-        self.fig = Figure(figsize=(8, 5.4) ,dpi=100)
-        self.gs = matplotlib.gridspec.GridSpec(1, 1, figure=self.fig, left=0.05, right=0.95, top=0.99, bottom=0.05)
+        self.fig = Figure(dpi=100)
+        self.gs = matplotlib.gridspec.GridSpec(
+            1, 1, 
+            figure=self.fig, 
+            left=0.1, right=0.95, 
+            top=0.95, bottom=0.1
+        )
         self.axs = []
         self.axs.append(self.fig.add_subplot(self.gs[0]))
         self.cbars = []
@@ -124,7 +127,8 @@ class GraphFrame(customtkinter.CTkFrame):
         self.graph.get_tk_widget().pack(
             side=tk.TOP, fill=tk.BOTH, 
             padx=gp.INNER_PAD,
-            pady=(0, gp.INNER_PAD)
+            pady=(0, gp.INNER_PAD),
+            expand=True
         )
         # create toolbar
         self.toolbar = CustomToolbar(canvas=self.graph, window=self, pack_toolbar=True)
@@ -144,8 +148,8 @@ class GraphFrame(customtkinter.CTkFrame):
             for key in self.current_function['required_params']:
                 self.params.get(key)
         except NameError as e:
+            self.master.label_text_change(f"Немає значення параметру(ів): {e}")
             self.master.param_expl_box.configure(
-                text=f"Немає значення параметру(ів): {e}",
                 text_color="red"
             )
     
@@ -180,8 +184,8 @@ class GraphFrame(customtkinter.CTkFrame):
             text = "Оберіть граф, щоб з'явилися поля вводу"
         else:
             text = self.current_function['params_explanation']
+        self.master.label_text_change(text)
         self.master.param_expl_box.configure(
-            text=text,
             text_color=["gray14", "gray84"]
         )
         # clear color bars if there are any (for heatmaps)
@@ -192,7 +196,6 @@ class GraphFrame(customtkinter.CTkFrame):
         
         for ax in range(len(self.axs)): # clear figure
             self.axs[ax].remove()
-        #     # self.fig.delaxes(self.axs[ax])
         self.axs.clear()
         # update figure
         self.graph.draw_idle()
@@ -206,7 +209,14 @@ class GraphFrame(customtkinter.CTkFrame):
         # save num of rows and cols for subplots 
         self.nrows, self.ncols = self.current_function['graph_sublots']['nrows'], self.current_function['graph_sublots']['ncols']
         # subplots grid
-        self.gs = matplotlib.gridspec.GridSpec(2, 2, figure=self.fig, left=0.08, right=0.98, top=0.95, bottom=0.05, hspace=0.2)
+        #TODO change grid gaps
+        self.gs = matplotlib.gridspec.GridSpec(
+            2, 2, 
+            figure=self.fig, 
+            left=0.1, right=0.95, 
+            top=0.95, bottom=0.1, 
+            hspace=0.3, wspace=.25
+        )
         # lists for plots and cbars
         self.axs = []
         self.cbars = []
@@ -222,7 +232,7 @@ class GraphFrame(customtkinter.CTkFrame):
         folder_name = self.check_if_lambda(self.current_function['folder_name'])
         self.functions_save_path = os.path.join(self.master.save_path, folder_name)
         # create a process
-        process = multiprocessing.Process(
+        self.process = multiprocessing.Process(
             target=run_in_process, 
             args=(
                 self.result_queue, 
@@ -230,10 +240,9 @@ class GraphFrame(customtkinter.CTkFrame):
                 kwargs,
             )
         )
-        process.start() # start the process
+        self.process.start() # start the process
         # After AWAIT_TIME milliseconds, check for any results using the self.check_result_queue function
         self.master.after(AWAIT_TIME, self.check_result_queue)
-    
     # function to update the plot once the needed result is received
     def update_plots(self, iteration, data):
         self.clear_canvas()
@@ -259,7 +268,7 @@ class GraphFrame(customtkinter.CTkFrame):
                 im_size = int(self.params['Size']) # extract image size
                 # plot a heatmap
                 im = self.axs[subplot_ind].imshow(data.reshape(im_size, im_size), cmap='coolwarm')
-
+                self.axs[subplot_ind].grid(False)
                 # Create colorbar
                 self.cbars.append(self.axs[subplot_ind].figure.colorbar(im, ax=self.axs[subplot_ind], cmap='coolwarm'))
                 self.cbars[-1].formatter = matplotlib.ticker.FormatStrFormatter('%.2f')
