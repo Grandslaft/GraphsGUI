@@ -1,7 +1,3 @@
-import os
-import numpy as np
-import matplotlib.pyplot as plt
-
 from .calc_functions import *
 
 R = 8.3144598
@@ -11,129 +7,164 @@ a0Fe = 2.86E-10
 ERROR = 1.0E-5
 dt = 1.0E-2
 
-def saveImageFile(fname, field, Size):
-    plt.imsave(fname, field.reshape(Size, Size), cmap='coolwarm')
+def calc_diagram_prep(progress, xCr_values, T_values, xAl, N, K, r0):
+    if xAl < 1E-5:
+        xCr_values, T_values = spinodal(R)
+        progress = 100
+    if xAl > 1E-5:
 
+        xCr = 0.1 + progress * 0.8 / 100
+        progress += 1
+        xCr_fin = 0.1 + progress * 0.8 / 100
 
-def write_data_to_xyz_file(fname, x, size):
-    f = open(fname, "w")
-    for i in range(size):
-        for j in range(size):
-            line = str(i) + '\t' + str(j) + '\t' + str(x.reshape(size, size)[i, j]) + '\n'
-            f.write(line)
-    f.close()
+        flag = 0
+        while xCr <= xCr_fin:
+            Temp = 1000.0
+            while Temp > 500.0:
+                pars = params()
+                pars.single_graph(Temp, xCr, xAl, N, K)
+                k = 0.0
+                while k < math.pi:
+                    l1 = lambda1(
+                        k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
+                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                    )
+                    l2 = lambda1(
+                        k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
+                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                    )
+                    if l1 > 0 or l2 > 0.0:
+                        flag = 1
+                        break
+                    k += dk
+                if flag == 1: break
+                Temp -= 1.0
+            if flag == 1:
+                xCr_values.append(xCr*100)
+                T_values.append(Temp)
+                flag = 0
+            xCr += 0.01
+    return progress, xCr_values, T_values
 
-def write_data_to_vtk_file(fname, x, size):
-    f = open(fname, "w")
-    f.write('# vtk DataFile Version 2.0')
-    f.write('\n')
-    f.write('Structured Grid 2D Dataset')
-    f.write('\n')
-    f.write('ASCII')
-    f.write('\n')
-    f.write('DATASET STRUCTURED_GRID')
-    f.write('\n')
-    line = 'DIMENSIONS ' + str(size) + ' ' + str(size) + ' ' + str(1) + '\n'
-    f.write(line)
-    line = 'POINTS ' + str(size * size * 1) + ' float \n'
-    f.write(line)
-    for i in range(size):
-        for j in range(size):
-            line = str(i + 1) + '\t' + str(j + 1) + '\t' + str(0) + '\n'
-            f.write(line)
-    line = 'POINT_DATA ' + str(size *size * 1) + '\n'
-    f.write(line)
-    f.write('SCALARS colors float\n')
-    f.write('LOOKUP_TABLE default\n')
-    for i in range(size*size):
-        f.write(str(x[i]))
-        f.write('\n')
-    f.close()
+def calc_diagram_irr(progress, K1, dK, arrays, xCr, xAl, N, r0):
+    K_values_1 = arrays[0]
+    T_values_1 = arrays[1]
+    K_values_2 = arrays[2]
+    T_values_2 = arrays[3]
+    K_values_3 = arrays[4]
+    T_values_3 = arrays[5]
+    K_values_4 = arrays[6]
+    T_values_4 = arrays[7]
+    K = K1
+    Kfin = K1 + dK
+    dT = 1
 
+    while K < Kfin:
+        flag = 0
+        Temp = 500.0
+        while Temp < 1000.0:
+            pars = params()
+            pars.single_graph(Temp, xCr, xAl, N, K)
+            l1_1k = lambda1(
+                dk, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
+                pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+            )
+            l2_1k = l1_1k
+            
+            if l1_1k > 0 or l2_1k > 0:
+                K_values_3.append(K)
+                T_values_3.append(Temp)
+                break
+            if flag == 0:
+                k = 0.0
+                while k < math.pi:
+                    l1_1k = lambda1(
+                        k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
+                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                    )
+                    l1_2k = lambda1(
+                        k + dk, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
+                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                    )
+                    l2_1k = l1_1k
+                    l2_2k = l1_2k
+                    if (l1_2k > 0 and l1_1k < 0) or (l2_2k > 0 and l2_1k < 0):
+                        K_values_1.append(K)
+                        T_values_1.append(Temp)
+                        flag = 1
+                        break
+                    k += dk
+            Temp += dT
 
-def make_file_name_prep(size, cr0, al0, T, time, ext, xname):
-    fname = xname + str(size) + '_t' + str(time) + '_Cr' + str(cr0 * 100) + '%Al' + str(al0 * 100) + '%_T' + str(
-        T) + '.' + ext
-    return fname
+        flag = 0
+        Temp = 1000.0
+        while Temp > 500.0:
+            pars = params()
+            pars.single_graph(Temp, xCr, xAl, N, K)
+            l1_1k = lambda1(
+                k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
+                pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+            )
+            l2_1k = l1_1k
+            if l1_1k > 0 or l2_1k > 0:
+                K_values_4.append(K)
+                T_values_4.append(Temp)
+                break
+            if flag == 0:
+                k = 0.0
+                while k < math.pi:
+                    l1_1k = lambda1(
+                        k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
+                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                    )
+                    l1_2k = lambda1(
+                        k + dk, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
+                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                    )
+                    l2_1k = l1_1k
+                    l2_2k = l1_2k
+                    if (l1_2k > 0 and l1_1k < 0) or (l2_2k > 0 and l2_1k < 0):
+                        K_values_2.append(K)
+                        T_values_2.append(Temp)
+                        flag = 1
+                        break
+                    k += dk
+            Temp -= dT
 
+        K += dK
+        if K > 9 * dK:
+            dK = dK * 10
 
-def make_file_name_irr(size, cr0, al0, T, N, K, r0, time, ext, xname):
-    fname = xname + str(size) + '_t' + str(time) + '_Cr' + str(cr0 * 100) + '%Al' + str(al0 * 100) + '%_T' + str(
-        T) + '_K' + str(K*1E6) + 'E-6_N' + str(N) + '_r0' + str(r0) + '.' + ext
-    return fname
+        arrays[0] = K_values_1
+        arrays[1] = T_values_1
+        arrays[2] = K_values_2
+        arrays[3] = T_values_2
+        arrays[4] = K_values_3
+        arrays[5] = T_values_3
+        arrays[6] = K_values_4
+        arrays[7] = T_values_4
+        progress += 2.8
 
-
-def save_precipitates(stage, Size, Cr0, Al0, T, N, K, r0, t, r, n):
-    if stage == 1:
-        fname = make_file_name_prep(Size, Cr0, Al0, T, '', 'dat', 'Prec')
-        colxname = 'Time [hours]'
-    else:
-        fname = make_file_name_irr(Size, Cr0, Al0, T, N, K, r0, '', 'dat', 'Prec')
-        colxname = 'Dose [dpa]'
-    f = open(fname, "w")
-    line = colxname + '\t<Rp> [nm]\tNp x 1E-27 [m^3]\n'
-    f.write(line)
-    for i in range(len(t)):
-        line = str(t[i]) + '\t' + str(r[i]) + '\t' + str(n[i]) + '\n'
-        f.write(line)
-    f.close()
-
-
-def save_data_prep(Size, Cr0, Al0, T, twrite, Cr, Al, png, vtk, xyz):
-    if png == 1:
-        fname = make_file_name_prep(Size, Cr0, Al0, T, twrite, 'png', 'Cr(r)')
-        saveImageFile(fname, Cr, Size)
-        fname = make_file_name_prep(Size, Cr0, Al0, T, twrite, 'png', 'Al(r)')
-        saveImageFile(fname, Al, Size)
-    if xyz == 1:
-        fname = make_file_name_prep(Size, Cr0, Al0, T, twrite, 'xyz', 'Cr(r)')
-        write_data_to_xyz_file(fname, Cr, Size)
-        fname = make_file_name_prep(Size, Cr0, Al0, T, twrite, 'xyz', 'Al(r)')
-        write_data_to_xyz_file(fname, Al, Size)
-    if vtk == 1:
-        fname = make_file_name_prep(Size, Cr0, Al0, T, twrite, 'vtk', 'Cr(r)')
-        write_data_to_vtk_file(fname, Cr, Size)
-        fname = make_file_name_prep(Size, Cr0, Al0, T, twrite, 'vtk', 'Al(r)')
-        write_data_to_vtk_file(fname, Al, Size)
-
-
-def save_data_irr(Size, Cr0, Al0, T, dose_write, N, K, r0, Cr, Al, png, vtk, xyz):
-    if png == 1:
-        fname = make_file_name_irr(Size, Cr0, Al0, T, N, K, r0, dose_write, 'png', 'Cr(r)')
-        saveImageFile(fname, Cr, Size)
-        fname = make_file_name_irr(Size, Cr0, Al0, T, N, K, r0, dose_write, 'png', 'Al(r)')
-        saveImageFile(fname, Al, Size)
-    if xyz == 1:
-        fname = make_file_name_irr(Size, Cr0, Al0, T, N, K, r0, dose_write, 'xyz', 'Cr(r)')
-        write_data_to_xyz_file(fname, Cr, Size)
-        fname = make_file_name_irr(Size, Cr0, Al0, T, N, K, r0, dose_write, 'xyz', 'Al(r)')
-        write_data_to_xyz_file(fname, Al, Size)
-    if vtk == 1:
-        fname = make_file_name_irr(Size, Cr0, Al0, T, N, K, r0, dose_write, 'vtk', 'Cr(r)')
-        write_data_to_vtk_file(fname, Cr, Size)
-        fname = make_file_name_irr(Size, Cr0, Al0, T, N, K, r0, dose_write, 'vtk', 'Al(r)')
-        write_data_to_vtk_file(fname, Al, Size)
-
-
-def getFlagFilename():
-    # Якщо опромінення тпердого розчину
-    flag = 0
-    CrFileName = ''
-    AlFileName = ''
-    # Якщо опромінення відпаленого сплвіу
-    flag = 1
-    CrFileName = 'CrFileName.xyz'
-    AlFileName = 'AlFileName.xyz'
-    return flag, CrFileName, AlFileName
-
-
-def mkFolderPrep(size, cr0, al0, T):
-    folder = 'M' + str(size) + '_Cr' + str(cr0 * 100) + '%Al' + str(al0 * 100) + '%_T' + str(T)
-    return folder
+    return progress, K, dK, arrays
 
 def FeCr_phase_graph(params):
-    Cr0 = params['Cr0']
-    Al0 = params['Al0']
+    progress, x, y = 0.0, [], []
+    while progress < 100:
+        progress, x, y = calc_diagram_prep(progress, x, y, params['xAl']/100, N=0, K=0, r0=0)
+        yield progress/100, -1, None
+    yield 1, -100, [(x, y)]
+
+def FeCrAl_phase_graph(params):
+    progress, K, dK, arrays = 0.0, 1e-8, 1e-8, [[] for _ in range(8)]
+    while progress < 100:
+        progress, K, dK, arrays = calc_diagram_irr(progress, K, dK, arrays, params['xCr']/100, params['xAl']/100, params['N'],  params['r0'])
+        yield progress/100, -1, None
+    yield 1, -100, [compile_arrays(arrays)]
+
+
+def FeCr_phase_model(params):
+    Cr0 = params['Cr0']/100
+    Al0 = params['Al0']/100
     T = params['T']
     max_t = params['max_t']
     Size = int(params['Size'])
@@ -150,7 +181,7 @@ def FeCr_phase_graph(params):
     TotSize = int(Size ** 2)
     ell = a0Al * Al0 + a0Cr * Cr0 + a0Fe * Fe0
     Fe, Cr, Al, pars, vars = initPFT(Cr0, Al0, T, N, K, r0, ell, Size, TotSize, '', '', 0)
-    scaling = pars[16]
+    scaling = pars.scaling
     progress = 0
     while t <= max_t:
         Fe, Cr, Al = calcPFT(Fe, Cr, Al, pars, vars, steps)
@@ -163,9 +194,9 @@ def FeCr_phase_graph(params):
         yield progress/100, t, [Cr, Al, (t_list, Rp_list), (t_list, Np_list)]
         t += tprogress
 
-def FeCrAl_phase_graph(params):
-    Cr0 = params['Cr0']
-    Al0 = params['Al0']
+def FeCrAl_phase_model(params):
+    Cr0 = params['Cr0']/100
+    Al0 = params['Al0']/100
     T = params['T']
     K = params['K']
     N = params['N']
@@ -182,7 +213,7 @@ def FeCrAl_phase_graph(params):
     TotSize = int(Size**2)
     ell = a0Al * Al0 + a0Cr * Cr0 + a0Fe * Fe0
     Fe, Cr, Al, pars, vars = initPFT(Cr0, Al0, T, N, K, r0, ell, Size, TotSize, '', '', 0)
-    scaling = pars[16]
+    scaling = pars.scaling
     d_dose = dt * K * scaling
     dose_progress = max_iter / 100
     steps = int(dose_progress/d_dose)

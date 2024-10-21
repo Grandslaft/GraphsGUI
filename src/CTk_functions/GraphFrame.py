@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 
 import numpy as np
 
-from ..functions.external_functions import (save_precipitates, write_data_to_xyz_file, write_data_to_vtk_file)
+from ..functions.external_functions import (save_data_to_file, write_data_to_xyz_file, write_data_to_vtk_file)
 
 import inspect
 
@@ -159,7 +159,8 @@ class GraphFrame(ctk.CTkFrame):
             # Try to get the result from the queue
             data = self.result_queue.get_nowait()
             self.master.eval_progress_bar.set(data[0]) # update progress bar
-            self.update_plots(data[1], data[2])
+            if data[2]: 
+                self.update_plots(data[1], data[2])
             self.master.after(AWAIT_TIME, self.check_result_queue) # keep checking
             return
             # If we get the needed result, we update the plot.
@@ -211,7 +212,7 @@ class GraphFrame(ctk.CTkFrame):
         # subplots grid
         #TODO change grid gaps
         self.gs = matplotlib.gridspec.GridSpec(
-            2, 2, 
+            self.nrows, self.ncols, 
             figure=self.fig, 
             left=0.1, right=0.95, 
             top=0.95, bottom=0.1, 
@@ -223,9 +224,11 @@ class GraphFrame(ctk.CTkFrame):
         # Graph title
         self.label.configure(text=self.current_function['button_name'])
         # end of calculation
-        self.end_iter = [value for key, value in self.params.items() if 'max_' in key][0]
+        maxes = [value for key, value in self.params.items() if 'max_' in key]
+        self.end_iter = maxes[0] if len(maxes) > 0 else -100
         # export files every {specified value}
-        self.every_iter = [value for key, value in self.params.items() if 'write_every_' in key][0]
+        write_interval = [value for key, value in self.params.items() if 'write_every_' in key]
+        self.every_iter = write_interval[0] if len(maxes) > 0 else -1
         # flag which tells when to save files
         self.time_to_save = self.every_iter
         # add folder's name to save path
@@ -283,34 +286,35 @@ class GraphFrame(ctk.CTkFrame):
         os.makedirs(self.functions_save_path)
     
     def export_files(self, iteration, data):
-        self.check_if_path_is_valid()
-        if self.master.export_check.get() and iteration >= self.time_to_save: # if the user requested an export and it's time to write
-            # save all the heatmap plots positions
-            heatmap_plots = [(i, x) for i, x in enumerate(self.axs) if self.current_function['graph_types'][i] == 'heatmap']
-            for ind, ax in heatmap_plots: # for all heatmaps
-                # update params for export files names
-                self.params['name_start'] = self.current_function['name_start'][ind]
-                self.params['time'] = int(iteration)
-                # create file name
-                file_name = self.check_if_lambda(self.current_function['default_file_name'])
-                # complete save path
-                save_path = os.path.join(self.functions_save_path, file_name)
-                if self.master.files_to_save['png']: # if save plot is requested
-                    extent = ax.get_tightbbox(self.fig.canvas.renderer).transformed(self.fig.dpi_scale_trans.inverted())
-                    # Expand the width by 1.1 times and keep the height the same
-                    expanded_extent = extent.expanded(1.25, 1)
-                    # Translate the bounding box to the right by half of the additional width
-                    translated_extent = expanded_extent.translated(extent.width * 0.5 * (1.25 - 1), 0)
-                    self.fig.savefig(f'{save_path}.png', bbox_inches=translated_extent)
-                if self.master.files_to_save['xyz']: # if save plot data in xyz is requested
-                    write_data_to_xyz_file(f'{save_path}.xyz', data[ind], self.params['Size'])
-                if self.master.files_to_save['vtk']: # if save plot data in vtk is requested
-                    write_data_to_vtk_file(f'{save_path}.vtk', data[ind], self.params['Size'])
-            self.time_to_save += self.every_iter
+        if self.master.export_check.get(): # if the user requested an export
+            self.check_if_path_is_valid()
+            if iteration >= 0 and iteration >= self.time_to_save: # and it's time to write
+                # save all the heatmap plots positions
+                heatmap_plots = [(i, x) for i, x in enumerate(self.axs) if self.current_function['graph_types'][i] == 'heatmap']
+                for ind, ax in heatmap_plots: # for all heatmaps
+                    # update params for export files names
+                    self.params['name_start'] = self.current_function['name_start'][ind]
+                    self.params['time'] = int(iteration)
+                    # create file name
+                    file_name = self.check_if_lambda(self.current_function['default_file_name'])
+                    # complete save path
+                    save_path = os.path.join(self.functions_save_path, file_name)
+                    if self.master.files_to_save['png']: # if save plot is requested
+                        extent = ax.get_tightbbox(self.fig.canvas.renderer).transformed(self.fig.dpi_scale_trans.inverted())
+                        # Expand the width by 1.1 times and keep the height the same
+                        expanded_extent = extent.expanded(1.25, 1)
+                        # Translate the bounding box to the right by half of the additional width
+                        translated_extent = expanded_extent.translated(extent.width * 0.5 * (1.25 - 1), 0)
+                        self.fig.savefig(f'{save_path}.png', bbox_inches=translated_extent)
+                    if self.master.files_to_save['xyz']: # if save plot data in xyz is requested
+                        write_data_to_xyz_file(f'{save_path}.xyz', data[ind], self.params['Size'])
+                    if self.master.files_to_save['vtk']: # if save plot data in vtk is requested
+                        write_data_to_vtk_file(f'{save_path}.vtk', data[ind], self.params['Size'])
+                self.time_to_save += self.every_iter
         
             if iteration == self.end_iter: # if its the end of calculations
-                self.params['name_start'] = 'Prec'
+                self.params['name_start'] = '' if self.end_iter == -100 else 'Prec'
                 file_name = self.check_if_lambda(self.current_function['default_file_name'])
                 save_path = os.path.join(self.functions_save_path, file_name)
-                save_precipitates(f'{save_path}.dat', self.current_function['prec_col_name'], data[2][0], data[2][1], data[3][1])
+                save_data_to_file(f'{save_path}.dat', data, self.current_function['dat_data'], self.current_function['dat_cols'])
                 os.startfile(self.master.save_path)

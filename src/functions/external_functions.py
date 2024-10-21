@@ -92,3 +92,62 @@ def save_precipitates(fname, column_name, t, r, n):
         line = str(t[i]) + '\t' + str(r[i]) + '\t' + str(n[i]) + '\n'
         f.write(line)
     f.close()
+    
+def write_data_to_file(fname, x, y):
+    f = open(fname, "w")
+    for i in range(len(x)):
+        line = str(x[i]) + '\t' + str(y[i]) + '\n'
+        f.write(line)
+    f.close()
+    
+def save_data_to_file(fname, data, to_save_ind=[], column_names_set=None):
+    
+    def write_to_file(whole_path, set_of_data, column_names):
+        with open(whole_path, "w") as f:
+            # Write the column names if provided
+            if column_names:
+                line = column_names + '\n'
+                f.write(line)
+            
+            # Transpose the list of args to iterate over rows
+            for row in zip(*set_of_data):
+                # Convert each element to a string and join with tabs
+                line = '\t'.join(map(str, row)) + '\n'
+                f.write(line)
+                
+    def multi_plot(data, column_names, fname_suf1=''):
+        suffix_2 = lambda num: f'_line{num:.0f}'
+        for index in range(0, int(len(data) / 2)):
+            fname = f"{fname_parts[0]}{fname_suf1}{suffix_2(index+1)}.{fname_parts[1]}"
+            column_names = column_names if column_names_set else None
+            x = data[0 + 2 * index]
+            y = data[1 + 2 * index]
+            write_to_file(fname, [x, y], column_names)
+    
+    if '.' in fname:
+        fname_parts = fname.rsplit('.', 1) 
+          
+    if len(to_save_ind) <= 1:
+        if len(data[0]) > 2:
+            multi_plot(data[0], column_names_set[0])
+            return
+        write_to_file(fname, data[0], column_names_set[0])
+        return
+    
+    suffix = lambda num: f'_plot{num:.0f}'
+    selected_data = [data[i] for i in to_save_ind]
+    
+    for num, data_part in enumerate(selected_data):
+        
+        if len(data_part) > 2:
+            
+            multi_plot(data_part, column_names[num], suffix(num+1))
+            pass
+            
+        fname = f"{fname_parts[0]}{suffix(num+1)}.{fname_parts[1]}"
+        column_names = column_names_set[num] if column_names_set else None
+        write_to_file(fname, data_part, column_names)
+    
+    
+        
+    

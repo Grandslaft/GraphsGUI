@@ -10,7 +10,10 @@ import matplotlib.pyplot
 import matplotlib.style
 
 from src.CTk_functions import ExportWindow, GraphFrame
-from src.functions.physics_graphs import FeCr_phase_graph, FeCrAl_phase_graph
+from src.functions.physics_graphs import (
+    FeCr_phase_graph, FeCrAl_phase_graph, 
+    FeCr_phase_model, FeCrAl_phase_model
+)
 from src.functions.external_functions import wrap_text
 import src.global_parameters as gp
 
@@ -62,6 +65,71 @@ functions = [
         button_name = "Фазова діаграма для сплаву Fe-Cr-Al у рівноважних умовах",
         params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
         graph_sublots=dict(
+            nrows=1,
+            ncols=1
+        ),
+        graph_titles = [
+            "Фазова діаграма для сплаву Fe-Cr-Al у рівноважних умовах"
+        ],
+        graph_types = [
+            'lines'
+        ],
+        required_params = dict(
+            xAl = 0,
+        ),
+        axis_titles = [
+            [None, None],
+        ],
+        scale = [
+            ['linear', 'linear'],
+        ],
+        lim = [
+            [None, None],
+        ],
+        function = FeCr_phase_graph,
+        dat_data = (),
+        dat_cols = ('x\ty\t',),
+        folder_name = '',
+        default_file_name = lambda xAl: f"T(xCr)_Al{xAl:.0f}",
+    ),
+    dict(
+        button_name = "Фазова діаграма для опроміненого сплаву Fe-Cr-Al",
+        params_explanation = "Введіть параметри xCr, xAl (від 0 до 0.2), N (Натуральне число), r0 (Натуральне число)",
+        graph_sublots=dict(
+            nrows=1,
+            ncols=1
+        ),
+        graph_titles = [
+             "Фазова діаграма для опроміненого сплаву Fe-Cr-Al"
+        ],
+        graph_types = [
+            'lines'
+        ],
+        required_params = dict(
+            xCr = 30,
+            xAl = 5,
+            N = 30,
+            r0 = 4,
+        ),
+        axis_titles = [
+            [None, None],
+        ],
+        scale = [
+            ['linear', 'linear'],
+        ],
+        lim = [
+            [None, None],
+        ],
+        function = FeCrAl_phase_graph,
+        dat_data = (),
+        dat_cols = ('x\ty\t', 'x\ty\t'),
+        folder_name = '',
+        default_file_name = lambda xCr, xAl, N, r0: f"K(T)_Cr{xCr:.0f}%Al{xAl:.0f}%_N{N:.0f}_r0{r0}",
+    ),
+    dict(
+        button_name = "Моделювання відпалу твердого розчину",
+        params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
+        graph_sublots=dict(
             nrows=2,
             ncols=2
         ),
@@ -78,8 +146,8 @@ functions = [
             'lines'
         ],
         required_params = dict(
-            Cr0 = 0.3,
-            Al0 = 0.05,
+            Cr0 = 30,
+            Al0 = 5,
             T = 710,
             max_t = 1000,
             write_every_t = 200,
@@ -94,8 +162,8 @@ functions = [
         scale = [
             ['linear', 'linear'],
             ['linear', 'linear'],
-            ['log', 'log'],
-            ['log', 'log'],
+            ['linear', 'linear'],
+            ['linear', 'linear'],
         ],
         lim = [
             [None, None],
@@ -103,17 +171,18 @@ functions = [
             [None, None],
             [None, None],
         ],
-        function = FeCr_phase_graph,
+        function = FeCr_phase_model,
         name_start = [
             'Cr(r)',
             'Al(r)'
         ],
-        prec_col_name = 'Time [hours]',
-        folder_name = lambda Size, Cr0, Al0, T: f"M{int(Size)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}",
-        default_file_name = lambda name_start, Size, time, Cr0, Al0, T: f"{name_start}{int(Size)}_t{int(time)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}",
+        dat_data = (2, 3),
+        dat_cols = ('Time [hours]\t<Rp> [nm]\t', 'Time [hours]\tNp x 1E-27 [m^3]\t'),
+        folder_name = lambda Size, Cr0, Al0, T: f"M{Size:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}",
+        default_file_name = lambda name_start, Size, time, Cr0, Al0, T: f"{name_start}{Size:.0f}_t{time:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}",
     ),
     dict(
-        button_name = "Фазова діаграма для опроміненого сплаву Fe-Cr-Al",
+        button_name = "Моделювання опромінення",
         params_explanation = "Введіть параметри xCr, xAl (від 0 до 0.2), N (Натуральне число), r0 (Натуральне число)",
         graph_sublots=dict(
             nrows=2,
@@ -132,8 +201,8 @@ functions = [
             'lines'
         ],
         required_params = dict(
-            Cr0 = 0.3,
-            Al0 = 0.05,
+            Cr0 = 30,
+            Al0 = 5,
             T = 710,
             K = 1E-6,
             N = 30,
@@ -151,8 +220,8 @@ functions = [
         scale = [
             ['linear', 'linear'],
             ['linear', 'linear'],
-            ['log', 'log'],
-            ['log', 'log'],
+            ['linear', 'linear'],
+            ['linear', 'linear'],
         ],
         lim = [
             [None, None],
@@ -160,14 +229,15 @@ functions = [
             [None, None],
             [None, None],
         ],
-        function = FeCrAl_phase_graph,
+        function = FeCrAl_phase_model,
         name_start = [
             'Cr(r)',
             'Al(r)'
         ],
-        precipitates_prefix = 'Dose [dpa]',
-        folder_name = lambda Size, Cr0, Al0, T, K, N, r0: f"M{int(Size)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}_K{int(K)*1e6}E-6_N{int(N)}_r0{int(r0)}",
-        default_file_name = lambda name_start, Size, time, Cr0, Al0, T, K, N, r0: f"{name_start}{int(Size)}_t{int(time)}_Cr{int(Cr0)*100}%Al{int(Al0)*100}%_T{int(T)}_K{int(K)*1e6}E-6_N{int(N)}_r0{int(r0)}",
+        dat_data = (2, 3),
+        dat_cols = ('Dose [dpa]\t<Rp> [nm]\t', 'Dose [dpa]\tNp x 1E-27 [m^3]\t'),
+        folder_name = lambda Size, Cr0, Al0, T, K, N, r0: f"M{Size:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}_K{K*1e6:.0f}E-6_N{N:.0f}_r0{r0}",
+        default_file_name = lambda name_start, Size, time, Cr0, Al0, T, K, N, r0: f"{name_start}{Size:.0f}_t{time:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}_K{K*1e6:.0f}E-6_N{N:.0f}_r0{r0:.0f}",
     ),
 ]
 
@@ -311,6 +381,8 @@ class App(ctk.CTk):
             self.sidebar_frame, 
             values=["80%", "90%", "100%", "110%", "120%"],
             corner_radius=gp.CORNER_RADIUS,
+            dropdown_fg_color=["#e6e7ed", "#1a1b26"],
+            dropdown_hover_color=["#325882", "#324578"],
             command=self.change_scaling_event
         )
         self.scaling_optionemenu.grid(
