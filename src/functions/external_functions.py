@@ -12,7 +12,7 @@ def get_label_font(obj):
     # Return the font in the desired format
     return (font_family, font_size)
 
-# line breaks a string if it exceeds wraplength characters length
+# line breaks a string if it exceeds wraplength pixel width
 def wrap_text(text, wraplength_px, obj):
     words = text.split()
     wrapped_text = ""

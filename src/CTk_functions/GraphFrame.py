@@ -148,10 +148,7 @@ class GraphFrame(ctk.CTkFrame):
             for key in self.current_function['required_params']:
                 self.params.get(key)
         except NameError as e:
-            self.master.label_text_change(f"Немає значення параметру(ів): {e}")
-            self.master.param_expl_box.configure(
-                text_color="red"
-            )
+            self.master.show_error_message(f"Немає значення параметру(ів): {e}")
     
     # function to check whether function gave the results
     def check_result_queue(self):
@@ -181,14 +178,6 @@ class GraphFrame(ctk.CTkFrame):
 
     # canvas cleaner
     def clear_canvas(self):
-        if self.current_function is None:
-            text = "Оберіть граф, щоб з'явилися поля вводу"
-        else:
-            text = self.current_function['params_explanation']
-        self.master.label_text_change(text)
-        self.master.param_expl_box.configure(
-            text_color=["gray14", "gray84"]
-        )
         # clear color bars if there are any (for heatmaps)
         for cbar in self.cbars:
             if cbar:
@@ -200,7 +189,6 @@ class GraphFrame(ctk.CTkFrame):
         self.axs.clear()
         # update figure
         self.graph.draw_idle()
-        # self.graph.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
     
     # plot function that is called from main.py
     def plot(self, fun_num, **kwargs): 
@@ -210,7 +198,6 @@ class GraphFrame(ctk.CTkFrame):
         # save num of rows and cols for subplots 
         self.nrows, self.ncols = self.current_function['graph_sublots']['nrows'], self.current_function['graph_sublots']['ncols']
         # subplots grid
-        #TODO change grid gaps
         self.gs = matplotlib.gridspec.GridSpec(
             self.nrows, self.ncols, 
             figure=self.fig, 

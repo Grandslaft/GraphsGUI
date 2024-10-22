@@ -10,10 +10,7 @@ import matplotlib.pyplot
 import matplotlib.style
 
 from src.CTk_functions import ExportWindow, GraphFrame
-from src.functions.physics_graphs import (
-    FeCr_phase_graph, FeCrAl_phase_graph, 
-    FeCr_phase_model, FeCrAl_phase_model
-)
+from functions import functions
 from src.functions.external_functions import wrap_text
 import src.global_parameters as gp
 
@@ -27,219 +24,6 @@ gp.CURRENT_DIR = os.path.dirname(__file__)
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 gp.Light_mode('System')
 ctk.set_default_color_theme(os.path.join(gp.CURRENT_DIR, 'src', 'styles', 'theme.json'))
-
-'''
-Explained Parameters of the Functions Dictionary Needed for Adding New Graphs to the GUI
-
-button_name: The label displayed on the button and used as the Graph Widget's title.
-
-params_explanation: A brief explanation of the required parameters for the function.
-
-graph_sublots: Defines the layout of subplots (rows and columns).
-
-graph_titles: A list of titles for individual graphs, either static or dynamically generated.
-
-graph_types: Specifies the type of graph (e.g., lines, heatmap).
-
-required_params: A dictionary of required parameters with default values.
-
-axis_titles: Titles for the x and y axes of the graphs.
-
-scale: Defines the scale for both x and y axes (e.g., linear, log).
-
-lim: Specifies axis limits; None if no specific limit is required.
-
-function: The function that generates the graph.
-
-name_start: The prefix for saving heatmap plot data.
-
-prec_col_name: The prefix for saving precipitate-related data.
-
-folder_name: Defines the folder name for saving files, static or dynamically generated.
-
-default_file_name: The default file name for saving output, static or dynamically generated.
-'''
-
-functions = [
-    dict(
-        button_name = "Фазова діаграма для сплаву Fe-Cr-Al у рівноважних умовах",
-        params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
-        graph_sublots=dict(
-            nrows=1,
-            ncols=1
-        ),
-        graph_titles = [
-            "Фазова діаграма для сплаву Fe-Cr-Al у рівноважних умовах"
-        ],
-        graph_types = [
-            'lines'
-        ],
-        required_params = dict(
-            xAl = 0,
-        ),
-        axis_titles = [
-            [None, None],
-        ],
-        scale = [
-            ['linear', 'linear'],
-        ],
-        lim = [
-            [None, None],
-        ],
-        function = FeCr_phase_graph,
-        dat_data = (),
-        dat_cols = ('x\ty\t',),
-        folder_name = '',
-        default_file_name = lambda xAl: f"T(xCr)_Al{xAl:.0f}",
-    ),
-    dict(
-        button_name = "Фазова діаграма для опроміненого сплаву Fe-Cr-Al",
-        params_explanation = "Введіть параметри xCr, xAl (від 0 до 0.2), N (Натуральне число), r0 (Натуральне число)",
-        graph_sublots=dict(
-            nrows=1,
-            ncols=1
-        ),
-        graph_titles = [
-             "Фазова діаграма для опроміненого сплаву Fe-Cr-Al"
-        ],
-        graph_types = [
-            'lines'
-        ],
-        required_params = dict(
-            xCr = 30,
-            xAl = 5,
-            N = 30,
-            r0 = 4,
-        ),
-        axis_titles = [
-            [None, None],
-        ],
-        scale = [
-            ['linear', 'linear'],
-        ],
-        lim = [
-            [None, None],
-        ],
-        function = FeCrAl_phase_graph,
-        dat_data = (),
-        dat_cols = ('x\ty\t', 'x\ty\t'),
-        folder_name = '',
-        default_file_name = lambda xCr, xAl, N, r0: f"K(T)_Cr{xCr:.0f}%Al{xAl:.0f}%_N{N:.0f}_r0{r0}",
-    ),
-    dict(
-        button_name = "Моделювання відпалу твердого розчину",
-        params_explanation = "Введіть параметр xAl (від 0 до 0.2)",
-        graph_sublots=dict(
-            nrows=2,
-            ncols=2
-        ),
-        graph_titles = [
-            'Просторовий розподіл Хрому', 
-            'Просторовий розподіл Алюмінію', 
-            'Еволюція середнього розміру преципітатів Хрому', 
-            'Еволюція густини преципітатів Хрому'
-        ],
-        graph_types = [
-            'heatmap',
-            'heatmap',
-            'lines',
-            'lines'
-        ],
-        required_params = dict(
-            Cr0 = 30,
-            Al0 = 5,
-            T = 710,
-            max_t = 1000,
-            write_every_t = 200,
-            Size = 64,
-        ),
-        axis_titles = [
-            [None, None],
-            [None, None],
-            ['Time [hours]', '<Rp> [nm]'],
-            ['Time [hours]', 'N x 10^(-27) [m^-3]']
-        ],
-        scale = [
-            ['linear', 'linear'],
-            ['linear', 'linear'],
-            ['linear', 'linear'],
-            ['linear', 'linear'],
-        ],
-        lim = [
-            [None, None],
-            [None, None],
-            [None, None],
-            [None, None],
-        ],
-        function = FeCr_phase_model,
-        name_start = [
-            'Cr(r)',
-            'Al(r)'
-        ],
-        dat_data = (2, 3),
-        dat_cols = ('Time [hours]\t<Rp> [nm]\t', 'Time [hours]\tNp x 1E-27 [m^3]\t'),
-        folder_name = lambda Size, Cr0, Al0, T: f"M{Size:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}",
-        default_file_name = lambda name_start, Size, time, Cr0, Al0, T: f"{name_start}{Size:.0f}_t{time:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}",
-    ),
-    dict(
-        button_name = "Моделювання опромінення",
-        params_explanation = "Введіть параметри xCr, xAl (від 0 до 0.2), N (Натуральне число), r0 (Натуральне число)",
-        graph_sublots=dict(
-            nrows=2,
-            ncols=2
-        ),
-        graph_titles = [
-            'Просторовий розподіл Хрому', 
-            'Просторовий розподіл Алюмінію', 
-            'Еволюція середнього розміру преципітатів Хрому', 
-            'Еволюція густини преципітатів Хрому'
-        ],
-        graph_types = [
-            'heatmap',
-            'heatmap',
-            'lines',
-            'lines'
-        ],
-        required_params = dict(
-            Cr0 = 30,
-            Al0 = 5,
-            T = 710,
-            K = 1E-6,
-            N = 30,
-            r0 = 1,
-            max_dose = 6,
-            write_every_dose = 1,
-            Size = 64,
-        ),
-        axis_titles = [
-            [None, None],
-            [None, None],
-            ['Dose [dpa]', '<Rp> [nm]'],
-            ['Dose [dpa]', 'N x 10^(-27) [m^-3]']
-        ],
-        scale = [
-            ['linear', 'linear'],
-            ['linear', 'linear'],
-            ['linear', 'linear'],
-            ['linear', 'linear'],
-        ],
-        lim = [
-            [None, None],
-            [None, None],
-            [None, None],
-            [None, None],
-        ],
-        function = FeCrAl_phase_model,
-        name_start = [
-            'Cr(r)',
-            'Al(r)'
-        ],
-        dat_data = (2, 3),
-        dat_cols = ('Dose [dpa]\t<Rp> [nm]\t', 'Dose [dpa]\tNp x 1E-27 [m^3]\t'),
-        folder_name = lambda Size, Cr0, Al0, T, K, N, r0: f"M{Size:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}_K{K*1e6:.0f}E-6_N{N:.0f}_r0{r0}",
-        default_file_name = lambda name_start, Size, time, Cr0, Al0, T, K, N, r0: f"{name_start}{Size:.0f}_t{time:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}_K{K*1e6:.0f}E-6_N{N:.0f}_r0{r0:.0f}",
-    ),
-]
 
 # main window of the GUI created using custom Tkinter
 class App(ctk.CTk):
@@ -257,14 +41,14 @@ class App(ctk.CTk):
         # configure grid layout (3x3)
         self.grid_columnconfigure((0,1), weight=0)
         self.grid_columnconfigure(2, weight=1)
-        self.grid_rowconfigure(0, weight=0)
-        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
         
         # sidebar frame for buttons and window customization
         self.sidebar_frame = ctk.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar_frame.grid(
             row=0, column=0, 
-            rowspan=4, 
+            rowspan=3, 
             sticky="nsew"
         )
         self.sidebar_frame.grid_rowconfigure((2), weight=1)
@@ -341,7 +125,11 @@ class App(ctk.CTk):
             )
             
         # light theme of the GUI
-        self.appearance_mode_label = ctk.CTkLabel(self.sidebar_frame, text="Тема застосунку:", anchor="w")
+        self.appearance_mode_label = ctk.CTkLabel(
+            self.sidebar_frame, 
+            text="Тема застосунку:", 
+            anchor="w"
+        )
         self.appearance_mode_label.grid(
             row=3, column=0, 
             padx=gp.OUTER_PAD, 
@@ -392,36 +180,15 @@ class App(ctk.CTk):
             sticky='ew'
         )
         
-        # Label for parameters' explanation  
-        # A StringVar to track the label's text
-        self.param_expl_text = ctk.StringVar() 
-        self.param_expl_box = ctk.CTkLabel(
-            self,
-            textvariable=self.param_expl_text,
-            height=100,
-            fg_color= ["#d6d8df", "#1a1b26"],
-            anchor='nw',
-            justify='left',
-            padx=gp.ELEMENTS_PAD, 
-            pady=gp.INNER_PAD,
-            corner_radius=gp.CORNER_RADIUS,
-        )
-        
-        self.param_expl_box.grid(
-            row=0, column=1,
-            padx=(gp.OUTER_PAD, 0), 
-            pady=(gp.OUTER_PAD, 0),
-            sticky="nsew"
-        )
-        
         # frame for parameters' inputs
         self.input_frame = ctk.CTkScrollableFrame(
             self, 
+            width=200,
             fg_color=["#d6d8df", "#1a1b26"],
             corner_radius=gp.CORNER_RADIUS
         )
         self.input_frame.grid(
-            row=1, column=1, 
+            row=0, column=1, 
             padx=(gp.OUTER_PAD, 0), 
             pady=(gp.OUTER_PAD, 0), 
             sticky="nsew"
@@ -434,7 +201,7 @@ class App(ctk.CTk):
             onvalue=True, offvalue=False  # Set onvalue to True and offvalue to False
         )
         self.export_check.grid(
-            row=2, column=1, 
+            row=1, column=1, 
             padx=(gp.OUTER_PAD, 0), 
             pady=(gp.OUTER_PAD, 0), 
             sticky="nsew"
@@ -443,7 +210,7 @@ class App(ctk.CTk):
         # update and export buttons
         self.function_buttons_frame = ctk.CTkFrame(self, fg_color='transparent')
         self.function_buttons_frame.grid(
-            row=3, column=1, 
+            row=2, column=1, 
             padx=(gp.OUTER_PAD, 0), 
             pady=(gp.OUTER_PAD, gp.OUTER_PAD), 
             sticky="nsew"
@@ -484,7 +251,7 @@ class App(ctk.CTk):
             row=0, column=2, 
             padx=gp.OUTER_PAD, 
             pady=(gp.OUTER_PAD, 0), 
-            sticky="nsew", rowspan=3
+            sticky="nsew", rowspan=2
         )
         
         # Progress Bar for calculations
@@ -496,7 +263,7 @@ class App(ctk.CTk):
         )
         self.eval_progress_bar.set(0)
         self.eval_progress_bar.grid(
-            row=3, column=2, 
+            row=2, column=2, 
             padx=gp.OUTER_PAD, 
             pady=gp.OUTER_PAD, 
             sticky="ew"
@@ -504,8 +271,7 @@ class App(ctk.CTk):
         
         # default values
         self.appearance_mode_optionemenu.set("Системна")
-        self.scaling_optionemenu.set("100%")
-        self.label_text_change("Оберіть граф, щоб з'явилися поля вводу") 
+        self.scaling_optionemenu.set("100%") 
 
     # Appearance changer
     def change_appearance_mode_event(self, new_appearance_mode: str):
@@ -529,7 +295,7 @@ class App(ctk.CTk):
             row=0, column=2, 
             padx=gp.OUTER_PAD, 
             pady=(gp.OUTER_PAD, 0), 
-            sticky="nsew", rowspan=3
+            sticky="nsew", rowspan=2
         )
         
     # Window's scale changer
@@ -592,11 +358,10 @@ class App(ctk.CTk):
         self.flag = function_number # flag to know what function's been called
         # kill the ongoing calculation process, if it exists
         if hasattr(self.graph_frame, 'process'): 
-            self.graph_frame.process.kill()
+            self.graph_frame.process.terminate()  # Tell proccess to stop
+            self.graph_frame.process.join()       # Wait for the process to stop 
             del self.graph_frame.process
         self.graph_frame.clear_canvas() # clear figure canvas
-        self.label_text_change(graph["params_explanation"])
-        # self.param_expl_box.configure(text=graph["params_explanation"]) # change a content of the label, that explains parameters
         self.graph_frame.label.configure(text=graph["button_name"]) # change title of the figure to the default(button's) name
         self.eval_progress_bar.set(0) # set progress bar to 0
         self.render_input_boxes(graph["required_params"]) # render input boxes
@@ -606,45 +371,43 @@ class App(ctk.CTk):
         # if user requester export, but save path isn't specified
         if self.export_check.get() and self.save_path == '':
             # raise error
-            self.label_text_change('Налаштуйте експорт')
-            self.param_expl_box.configure(
-                text_color="red"
-            )
+            self.show_error_message('Налаштуйте експорт')
             return
         
         # kill the ongoing calculation process, if it exists
         if hasattr(self.graph_frame, 'process'): 
-            self.graph_frame.process.kill()
+            self.graph_frame.process.terminate()  # Tell proccess to stop
+            self.graph_frame.process.join()       # Wait for the process to stop 
             del self.graph_frame.process
         
         self.graph_frame.clear_canvas() # clear figure canvas
-        # return basic text for the selected function
-        self.label_text_change(self.functions[self.flag]["params_explanation"]) 
-        if len(self.functions[self.flag]['required_params']) == 0:
-            self.graph_frame.plot(self.flag) # if there're no parameters, we plot a figure
+        if hasattr(self, 'flag'):
+            if len(self.functions[self.flag]['required_params']) == 0:
+                self.graph_frame.plot(self.flag) # if there're no parameters, we plot a figure
+                return
+        else:
+            self.show_error_message('Оберіть функцію')
+            return
         
-        # If no, we check if all values are numbers. If so, we plot a figure with its parameters
-        try:
-            params = dict()
-            for key, value in self.inputs.items():
-                param_value = value.get() # get parameter's value
-                if param_value == '': # if empty aka user didn't specified 
-                    param_value = value._placeholder_text # get standart value from the placeholder of entry
+        # If we have inputs we check if all values are numbers. If so, we plot a figure with its parameters
+        params = dict()
+        for key, value in self.inputs.items():
+            param_value = value.get() # get parameter's value
+            if param_value == '': # if empty aka user didn't specified 
+                param_value = value._placeholder_text # get standart value from the placeholder of entry
+            try:
                 params[key] = float(param_value) # transform to float
-            self.graph_frame.plot(self.flag, **params)                
-        except ValueError as e: # if value cannont be transformed into float, raise an error
-            self.label_text_change(f"Невірне значення параметру {e}")
-            self.param_expl_box.configure(
-                # text=f"Невірне значення параметру {e}",
-                text_color="red"
-            )
+            except ValueError:
+                self.show_error_message(f"Невірне значення параметру {key}")
+                return
+            
+        self.graph_frame.plot(self.flag, **params)
             
     # export window caller
     def open_export_config(self):
         # if there's no export window, we create one
         if self.export_window is None or not self.export_window.winfo_exists():
             self.export_window = ExportWindow(self)
-            
         self.export_window.focus()  # if window exists focus it
     
     # save export configuration
@@ -660,15 +423,22 @@ class App(ctk.CTk):
         # close export window
         self.export_window.destroy()
     
-    # function to change label's text with prior text wrapping
-    def label_text_change(self, new_text):
-        expl_box_width = self.param_expl_box.winfo_width()
-        wrapped_text, _ = wrap_text(
-            text=new_text, 
-            wraplength_px=expl_box_width - 2 * gp.ELEMENTS_PAD if expl_box_width > 50 else 300, 
-            obj=self.param_expl_box
+    def show_error_message(self, message):
+        # Create the error label if it doesn't exist already
+        self.error_label = ctk.CTkLabel(
+            master=self,  # Or your main window or frame
+            text=message,
+            font=ctk.CTkFont(size=10, weight="bold"),
+            fg_color="red",  # Background color of the label
+            text_color="white",  # Color of the text
+            corner_radius=10
         )
-        self.param_expl_text.set(wrapped_text)
+        
+        # Position it to cover a portion of the screen
+        self.error_label.place(relx=0.5, rely=0.01, anchor='center')
+        
+        # Optionally, hide the message after a few seconds
+        self.after(3000, self.error_label.destroy)  # This will destroy the label after 3 seconds
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
