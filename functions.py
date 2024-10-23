@@ -175,6 +175,10 @@ functions = [
             'lines',
             'lines'
         ],
+        import_switch_modes = [
+            "Опромінення твердого розчину",
+            "Опромінення відпаленого сплаву",
+        ],
         required_params = dict(
             Cr0 = 30,
             Al0 = 5,
@@ -212,6 +216,6 @@ functions = [
         dat_data = (2, 3),
         dat_cols = ('Dose [dpa]\t<Rp> [nm]\t', 'Dose [dpa]\tNp x 1E-27 [m^3]\t'),
         folder_name = lambda Size, Cr0, Al0, T, K, N, r0: f"M{Size:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}_K{K*1e6:.0f}E-6_N{N:.0f}_r0{r0}",
-        default_file_name = lambda name_start, Size, time, Cr0, Al0, T, K, N, r0: f"{name_start}{Size:.0f}_t{time:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}_K{K*1e6:.0f}E-6_N{N:.0f}_r0{r0:.0f}",
+        default_file_name = lambda name_start, Size, time, Cr0, Al0, T, K, N, r0: f"{name_start}{Size:.0f}_t{time:.0f}_Cr{Cr0:.0f}%Al{Al0:.0f}%_T{T:.0f}_K{K:.0f}E-6_N{N:.0f}_r0{r0:.0f}",
     ),
 ]

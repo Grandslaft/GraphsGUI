@@ -169,6 +169,15 @@ def FeCr_phase_model(params):
     max_t = params['max_t']
     Size = int(params['Size'])
     
+    # if import path to the saved data is specified
+    to_import, vtk_path, xyz_path = False, '', ''
+    if params.get('vtk_path'):
+        to_import = True
+        vtk_path = params['vtk_path']
+    if params.get('xyz_path'):
+        to_import = True
+        xyz_path = params['xyz_path']
+        
     K, N, r0 = 0, 0, 0
     
     Rp_list = []
@@ -180,7 +189,7 @@ def FeCr_phase_model(params):
     Fe0 = 1.0 - Cr0 - Al0
     TotSize = int(Size ** 2)
     ell = a0Al * Al0 + a0Cr * Cr0 + a0Fe * Fe0
-    Fe, Cr, Al, pars, vars = initPFT(Cr0, Al0, T, N, K, r0, ell, Size, TotSize, '', '', 0)
+    Fe, Cr, Al, pars, vars = initPFT(Cr0, Al0, T, N, K, r0, ell, Size, TotSize, to_import, vtk_path, xyz_path)
     scaling = pars.scaling
     progress = 0
     while t <= max_t:

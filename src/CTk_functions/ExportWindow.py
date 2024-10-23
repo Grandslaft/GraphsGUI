@@ -148,7 +148,7 @@ class ExportWindow(ctk.CTkToplevel):
         # function to open a dialog window for choosing the save directory, specifying the file name, and selecting the file type
         file_path = filedialog.askdirectory(
             initialdir=self.master.save_path,
-            title="Оберіть місце збереження даних"
+            title="Оберіть місце для збереження даних"
         )
         if file_path == '': # if window was closed, end function
             return

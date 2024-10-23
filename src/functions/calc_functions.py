@@ -206,15 +206,37 @@ def omega(k2, G, r0):
     w = G*(1.0 - 1.0/(1.0 + k2*r0*r0))
     return w
 
-def GenerateAll(Cr0, Al0, TotSize, fnameCr, fnameAl, flag):
-    Cr = abs(np.random.normal(Cr0, ERROR, TotSize))
+def read_data_from_xyz_file(fname, TotSize):
+    with open(fname) as f:
+        data = np.fromfile(f, dtype=float, count=TotSize * 3, sep=" ").reshape((TotSize, 3))
+    return data
+
+def read_data_from_vtk_file(fname, TotSize):
+    X = np.zeros(TotSize)
+    length = TotSize + 6 + 3
+    with open(fname) as f:
+        for i in range (length):
+            f.readline()
+        for i in range(TotSize):
+            X[i] = f.readline()
+    return X
+
+def GenerateAll(Cr0:float, Al0:float, TotSize:int, to_import=False, vtk_path=[], xyz_path=[]):
     Al = abs(np.random.normal(Al0, ERROR, TotSize))
-    if flag == 1:
-        xyz = read_data_from_xyz_file(fnameCr, TotSize)
-        Cr = xyz[:, 2]
-        if Al0 > ERROR:
-            xyz = read_data_from_xyz_file(fnameAl, TotSize)
-            Al = xyz[:, 2]
+    if to_import:
+        if len(vtk_path) != 0:
+            
+            Cr = read_data_from_vtk_file(vtk_path[0]+'Cr'+vtk_path[1], TotSize)[:, 2]
+            if Al0 > ERROR:
+                Al = read_data_from_vtk_file(vtk_path[0]+'Al'+vtk_path[1], TotSize)[:, 2]
+        if len(xyz_path) != 0:
+            Cr = read_data_from_xyz_file(vtk_path[0]+'Cr'+vtk_path[1], TotSize)[:, 2]
+            if Al0 > ERROR:
+                Al = read_data_from_xyz_file(vtk_path[0]+'Al'+vtk_path[1], TotSize)[:, 2]
+    else:
+        Cr = abs(np.random.normal(Cr0, ERROR, TotSize))
+        Al = abs(np.random.normal(Al0, ERROR, TotSize))
+
     Fe, Cr, Al = conservation(Cr0, Al0, Cr, Al)
     return Fe, Cr, Al
 
@@ -237,11 +259,10 @@ def Init_k_space_2d(Size, TotSize):
             k2[j+Size*i] = kx[i]*kx[i] + ky[j]*ky[j]
     return k2
 
-
-def initPFT(Cr0, Al0, T, N, K, r0, ell, Size, TotSize, fnameCr, fnameAl, flag):
+def initPFT(Cr0:float, Al0:float, T:float, N:float, K:float, r0:float, ell:float, Size:int, TotSize:int, to_import=False, vtk_path=[], xyz_path=[]):
     pars = params()
     pars.multi_graph(Cr0, Al0, T, N, K, r0, ell)
-    Fe, Cr, Al = GenerateAll(Cr0, Al0, TotSize, fnameCr, fnameAl, flag)
+    Fe, Cr, Al = GenerateAll(Cr0, Al0, TotSize, to_import, vtk_path, xyz_path)
     vars = params()
     vars.variables(Size, TotSize)
     return Fe, Cr, Al, pars, vars
@@ -255,8 +276,6 @@ def conservation(Cr0, Al0, Cr, Al):
     Fe = 1.0 - Cr - Al
     Fe = np.clip(Fe, 0.0, 1.0)
     return Fe, Cr, Al
-
-
     
 def calcPFT(Fe, Cr, Al, pars, vars, steps):
     for _ in range(steps):

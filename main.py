@@ -1,13 +1,11 @@
 import tkinter as tk
 import customtkinter as ctk
 
+from tkinter import filedialog
+
 import matplotlib
 
 import multiprocessing
-
-import matplotlib.pylab
-import matplotlib.pyplot
-import matplotlib.style
 
 from src.CTk_functions import ExportWindow, GraphFrame
 from functions import functions
@@ -38,17 +36,18 @@ class App(ctk.CTk):
         self.geometry(f"{1500}x{800}")
         self.minsize(1500, 800)
         
-        # configure grid layout (3x3)
-        self.grid_columnconfigure((0,1), weight=0)
-        self.grid_columnconfigure(2, weight=1)
+        # configure grid layout
+        self.grid_columnconfigure((0), weight=0)
+        self.grid_columnconfigure((1), weight=1)
+        self.grid_columnconfigure(2, weight=2)
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=0)
         
         # sidebar frame for buttons and window customization
-        self.sidebar_frame = ctk.CTkFrame(self, width=200, corner_radius=0)
+        self.sidebar_frame = ctk.CTkFrame(self, corner_radius=0)
         self.sidebar_frame.grid(
             row=0, column=0, 
-            rowspan=3, 
+            rowspan=2, 
             sticky="nsew"
         )
         self.sidebar_frame.grid_rowconfigure((2), weight=1)
@@ -180,39 +179,56 @@ class App(ctk.CTk):
             sticky='ew'
         )
         
+        # frame for all the functions' inputs
+        self.function_options_frame = ctk.CTkFrame(
+            self, 
+            fg_color='transparent',
+        )
+        self.function_options_frame.grid(
+            row=0, column=1, 
+            padx=(gp.OUTER_PAD, 0), 
+            pady=gp.OUTER_PAD,
+            sticky="nsew", rowspan=2
+        )
+        self.function_options_frame.grid_columnconfigure((0), weight=1, minsize=.2)
+        self.function_options_frame.grid_rowconfigure((0), weight=1)
+        
         # frame for parameters' inputs
         self.input_frame = ctk.CTkScrollableFrame(
-            self, 
-            width=200,
+            self.function_options_frame, 
             fg_color=["#d6d8df", "#1a1b26"],
             corner_radius=gp.CORNER_RADIUS
         )
         self.input_frame.grid(
-            row=0, column=1, 
-            padx=(gp.OUTER_PAD, 0), 
-            pady=(gp.OUTER_PAD, 0), 
-            sticky="nsew"
+            row=0, column=0, 
+            padx=0, 
+            pady=0, 
+            sticky="nsew",
         )
         self.input_frame.grid_columnconfigure((0, 1), weight=1)
         
         self.export_check = ctk.CTkCheckBox(
-            self, text="Експортувати Файли", 
+            self.function_options_frame, 
+            text="Експортувати Файли", 
             command=self.if_export_clicked,
             onvalue=True, offvalue=False  # Set onvalue to True and offvalue to False
         )
         self.export_check.grid(
-            row=1, column=1, 
-            padx=(gp.OUTER_PAD, 0), 
+            row=1, column=0, 
+            padx=0, 
             pady=(gp.OUTER_PAD, 0), 
             sticky="nsew"
         )
 
         # update and export buttons
-        self.function_buttons_frame = ctk.CTkFrame(self, fg_color='transparent')
+        self.function_buttons_frame = ctk.CTkFrame(
+            self.function_options_frame, 
+            fg_color='transparent'
+        )
         self.function_buttons_frame.grid(
-            row=2, column=1, 
-            padx=(gp.OUTER_PAD, 0), 
-            pady=(gp.OUTER_PAD, gp.OUTER_PAD), 
+            row=2, column=0, 
+            padx=0, 
+            pady=(gp.OUTER_PAD, 0), 
             sticky="nsew"
         )
         self.function_buttons_frame.grid_columnconfigure((0, 1), weight=1)
@@ -226,7 +242,7 @@ class App(ctk.CTk):
         )
         self.update_button.grid(
             row=0, column=0, 
-            padx=(0, gp.INNER_PAD), 
+            padx=(0, gp.INNER_PAD),
             sticky="nsew"
         )
         
@@ -251,7 +267,7 @@ class App(ctk.CTk):
             row=0, column=2, 
             padx=gp.OUTER_PAD, 
             pady=(gp.OUTER_PAD, 0), 
-            sticky="nsew", rowspan=2
+            sticky="nsew"
         )
         
         # Progress Bar for calculations
@@ -263,7 +279,7 @@ class App(ctk.CTk):
         )
         self.eval_progress_bar.set(0)
         self.eval_progress_bar.grid(
-            row=2, column=2, 
+            row=1, column=2, 
             padx=gp.OUTER_PAD, 
             pady=gp.OUTER_PAD, 
             sticky="ew"
@@ -295,7 +311,7 @@ class App(ctk.CTk):
             row=0, column=2, 
             padx=gp.OUTER_PAD, 
             pady=(gp.OUTER_PAD, 0), 
-            sticky="nsew", rowspan=2
+            sticky="nsew"
         )
         
     # Window's scale changer
@@ -312,6 +328,38 @@ class App(ctk.CTk):
             self.graph_frame.plot(self.flag)
             return
         # if there are parameters
+        start_row = 0
+        if self.functions[self.flag].get('import_switch_modes') and len(self.functions[self.flag].get('import_switch_modes')) == 2:
+            start_row = 1
+            self.switch_frame = ctk.CTkFrame(
+                self.input_frame,
+                corner_radius=gp.CORNER_RADIUS,
+                fg_color='transparent'
+            )
+            self.switch_frame.grid(
+                row=0, column=0, 
+                padx=gp.INNER_PAD, 
+                pady=(gp.INNER_PAD, 0), 
+                sticky="nsew", columnspan=2
+            )
+            self.switch_frame.grid_columnconfigure((0, 1), weight=1)
+            self.switch_text = ctk.StringVar(
+                self.switch_frame, 
+                self.functions[self.flag].get('import_switch_modes')[0]
+            )
+            self.function_mode_switch = ctk.CTkSwitch(
+                self.switch_frame, 
+                corner_radius=gp.CORNER_RADIUS,
+                onvalue=True, offvalue=False,
+                textvariable=self.switch_text,
+                command=self.import_switch
+            )
+            self.function_mode_switch.grid(
+                row=0, column=0, 
+                padx=0, 
+                pady=0, 
+                sticky="nsew", columnspan=2
+            )
         self.inputs = dict() # create var to store input boxes
         input_labels = list(input_boxes.keys()) # save parameters' names
         for inp_num in range(len(input_boxes)): # for each parameter
@@ -323,7 +371,7 @@ class App(ctk.CTk):
                     size=14, weight="bold"
                 )
             ).grid(
-                row=inp_num, column=0, 
+                row=start_row+inp_num, column=0, 
                 padx=gp.INNER_PAD, 
                 pady=(gp.INNER_PAD, 0), 
                 sticky="w"
@@ -334,7 +382,7 @@ class App(ctk.CTk):
                 placeholder_text=input_boxes[input_labels[inp_num]]
             )
             self.inputs[input_labels[inp_num]].grid(
-                row=inp_num, column=1, 
+                row=start_row+inp_num, column=1, 
                 padx=(0, gp.INNER_PAD*2), 
                 pady=(gp.INNER_PAD, 0), 
                 sticky="nsew"
@@ -344,6 +392,67 @@ class App(ctk.CTk):
     def destroy_input_boxes(self):
         for widget in self.input_frame.winfo_children():
             widget.destroy()
+    
+    def import_switch(self):
+        if self.function_mode_switch.get():
+            self.switch_text.set(self.functions[self.flag].get('import_switch_modes')[1])
+            self.import_button = self.add_import_button(self.switch_frame, self.import_func)
+            return
+        self.switch_text.set(self.functions[self.flag].get('import_switch_modes')[0])
+        self.import_button.destroy()
+        if self.inputs['Cr0'].cget('state') == 'readonly':
+            self.inputs['Cr0'].configure(state='normal')
+        if self.inputs['Al0'].cget('state') == 'readonly':
+            self.inputs['Al0'].configure(state='normal')
+        
+    
+    def add_import_button(self, master, func):
+        button = ctk.CTkButton(
+            master=master, 
+            text='Імпортувати дані',
+            corner_radius=gp.CORNER_RADIUS,
+            command=func
+        )
+        button.grid(
+            row=1, column=0, 
+            pady=(gp.INNER_PAD, 0),
+            sticky="nsew"
+        )
+        return button
+    
+    def import_func(self):
+        file_path = filedialog.askopenfilename(
+            initialdir=self.save_path,
+            title="Оберіть дані для завантаження Al/Cr",
+            filetypes=[
+                ('All Files', '*.vtk *.xyz'),
+                ('vtk файли', '*.vtk'),
+                ('xyz файли', '*.xyz')
+            ]
+        )
+        if file_path == '': return
+        path_parts = file_path.rsplit('/', 1) 
+        path_parts[0] = path_parts[0] + '/'
+        path_parts[1] = path_parts[1][2:]
+        
+        for name_part in path_parts[1].split('_'):
+            if ('Cr' in name_part) or ('Al' in name_part):
+                self.import_file_extension = path_parts[1][path_parts[1].rfind('.')+1:]
+                self.import_file_path = path_parts
+                
+                Cr_Al_share = name_part.strip('%').split('%')
+                default_Cr_Al_values = [''.join(filter(str.isdigit, share)) for share in Cr_Al_share]
+                
+                self.inputs['Cr0'].delete(0, 'end')
+                self.inputs['Cr0'].insert(0, default_Cr_Al_values[0])
+                self.inputs['Cr0'].configure(state='readonly')
+                self.inputs['Al0'].delete(0, 'end')
+                self.inputs['Al0'].insert(0, default_Cr_Al_values[1])
+                self.inputs['Al0'].configure(state='readonly')
+                return
+            
+        self.show_error_message('Неправильний файл чи назва файлу')
+        
     
     # if export button check is clicked
     def if_export_clicked(self):
@@ -400,6 +509,13 @@ class App(ctk.CTk):
             except ValueError:
                 self.show_error_message(f"Невірне значення параметру {key}")
                 return
+        
+        if hasattr(self, 'import_file_extension'):
+            match self.import_file_extension:
+                case 'vtk':
+                    params['vtk_path'] = self.import_file_path
+                case 'xyz':
+                    params['xyz_path'] = self.import_file_path
             
         self.graph_frame.plot(self.flag, **params)
             
