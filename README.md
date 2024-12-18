@@ -1,34 +1,26 @@
----
+**Getting Started: Running the Application**
 
-# Building a Graphical User Interface (GUI) for Data Visualization Using Tkinter and CustomTkinter
+You have two options for running the application:
 
-Data visualization plays a critical role in data analysis, helping users uncover patterns, trends, and correlations that may not be immediately apparent in raw or text-based data. A well-designed GUI can make this process more intuitive and user-friendly, offering a seamless experience for both novice and experienced users.
+**1. Using the Python Source Code:**
 
-### Why Use Tkinter and CustomTkinter?
+   *   **Install Dependencies:** Before running the application, ensure you have all the required Python packages installed. Open your terminal or command prompt and navigate to the project's root directory. Then, execute the following command:
 
-Tkinter is the standard GUI library for Python, offering a simple yet powerful framework for creating GUI applications. CustomTkinter, an enhanced extension of Tkinter, provides additional widgets, customization options, and styling features, allowing you to build visually appealing and modern interfaces with minimal effort.
+       ```bash
+       pip install -r requirements.txt
+       ```
 
-### Key Features of the Data Visualization GUI
+       This command will install the necessary libraries listed in the `requirements.txt` file.
+   *   **Run the Application:** Once the dependencies are installed, you can launch the application using:
 
-This GUI will incorporate several essential features:
+       ```bash
+       python main.py
+       ```
 
-- **Graph Plotting**: Users can plot graphs based on predefined parameters or enter custom parameters, giving them flexibility in how they visualize their data.
-  
-- **Customizable Parameters**: The GUI will support both default and user-defined parameters for graph plotting, allowing for a highly customizable experience.
+**2. Using the Pre-built Executable:**
 
-- **Easy Function Integration**: Users can add new functions to plot with ease, streamlining the process of expanding the tool’s functionality.
-
-- **Appearance Modes**: The interface will include multiple appearance modes, such as light and dark themes, giving users the option to customize the GUI to their preferences or reduce eye strain.
-
-- **Flexible Scaling Options**: The GUI will offer a variety of scale options for the graphs, enabling users to adjust the resolution and format of the data visualization as needed.
-
-- **Export Functionality**: A dedicated export window will allow users to save the graph and calculated coordinates, making it easy to integrate visualizations into reports or presentations.
-
-### Running the Application
-
-To run this application you just need to run it like this:
-```bash
-python main.py
-```
-
----
+   *   **Locate the Executable:** The application is also available as a pre-built executable, located in the `dist` folder. The full path to the executable is: `dist\Simulations HUB\Simulations HUB.exe`
+   *   **Run the Executable:** Simply double-click the `Simulations HUB.exe` file to launch the application. No separate Python installation or dependency management is required for this method. You can also run it by using this command in your terminal:
+        ```bash
+        .\dist\Simulations HUB\Simulations HUB.exe
+        ```
