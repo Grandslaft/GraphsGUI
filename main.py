@@ -7,6 +7,8 @@ import matplotlib
 
 import regex as re
 
+import multiprocessing
+
 from src.CTk_functions import ExportWindow, GraphFrame
 from functions import functions
 from src.functions.external_functions import wrap_text
@@ -419,7 +421,7 @@ class App(ctk.CTk):
             r"%_T(\d+)"  # Temperature
             r"_K(\d+(?:\.\d+)?[eE][+-]?\d+)"
             r"_N(\d+)"  # N
-            r"_r0(\d+)"  # r0
+            r"_r0(\d+(?:\.\d+)?)"  # r0
             r"\.(\w+)$"  # file extension
         )
 
@@ -466,10 +468,11 @@ class App(ctk.CTk):
     def function_call(self, graph, function_number):
         self.flag = function_number  # flag to know what function's been called
         # kill the ongoing calculation process, if it exists
-        if hasattr(self.graph_frame, "process"):
+        if self.graph_frame.process:
             self.graph_frame.process.terminate()  # Tell proccess to stop
             self.graph_frame.process.join()  # Wait for the process to stop
             del self.graph_frame.process
+            self.graph_frame.process = None
 
         self.graph_frame.clear_canvas()  # clear figure canvas
 
@@ -485,10 +488,11 @@ class App(ctk.CTk):
             return
 
         # kill the ongoing calculation process, if it exists
-        if hasattr(self.graph_frame, "process"):
+        if self.graph_frame.process:
             self.graph_frame.process.terminate()  # Tell proccess to stop
             self.graph_frame.process.join()  # Wait for the process to stop
             del self.graph_frame.process
+            self.graph_frame.process = None
 
         self.graph_frame.clear_canvas()  # clear figure canvas
         if hasattr(self, "flag"):
@@ -565,6 +569,6 @@ class App(ctk.CTk):
 
 
 if __name__ == "__main__":
-    # multiprocessing.freeze_support()
+    multiprocessing.freeze_support()
     app = App(functions=functions)
     app.mainloop()

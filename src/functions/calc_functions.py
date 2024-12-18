@@ -372,21 +372,21 @@ def GenerateAll(
     if to_import:
         if len(vtk_path) != 0:
 
-            Cr = read_data_from_vtk_file(vtk_path[0] + "Cr" + vtk_path[1], TotSize)[
-                :, 2
-            ]
+            Cr = read_data_from_vtk_file(
+                vtk_path[0] + "Cr" + vtk_path[1], TotSize
+                )[:, 2]
             if Al0 > ERROR:
-                Al = read_data_from_vtk_file(vtk_path[0] + "Al" + vtk_path[1], TotSize)[
-                    :, 2
-                ]
+                Al = read_data_from_vtk_file(
+                    vtk_path[0] + "Al" + vtk_path[1], TotSize
+                    )[:, 2]
         if len(xyz_path) != 0:
-            Cr = read_data_from_xyz_file(vtk_path[0] + "Cr" + vtk_path[1], TotSize)[
-                :, 2
-            ]
+            Cr = read_data_from_xyz_file(
+                vtk_path[0] + "Cr" + vtk_path[1], TotSize
+                )[:, 2]
             if Al0 > ERROR:
-                Al = read_data_from_xyz_file(vtk_path[0] + "Al" + vtk_path[1], TotSize)[
-                    :, 2
-                ]
+                Al = read_data_from_xyz_file(
+                    vtk_path[0] + "Al" + vtk_path[1], TotSize
+                    )[:, 2]
     else:
         Cr = abs(np.random.normal(Cr0, ERROR, TotSize))
         Al = abs(np.random.normal(Al0, ERROR, TotSize))
@@ -548,12 +548,3 @@ def calcPFT(Fe, Cr, Al, pars, vars, steps):
             Al += dt * vars.out_fAl_r.real
         Fe, Cr, Al = conservation(pars.Cr0, pars.Al0, Cr, Al)
     return Fe, Cr, Al
-
-
-def read_data_from_xyz_file(fname, TotSize):
-
-    with open(fname) as f:
-        data = np.fromfile(f, dtype=float, count=TotSize * 3, sep=" ").reshape(
-            (TotSize, 3)
-        )
-    return data

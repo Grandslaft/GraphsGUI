@@ -311,7 +311,7 @@ def FeCrAl_phase_model(params):
     scaling = pars.scaling
     d_dose = dt * K * scaling
     dose_progress = max_iter / 100
-    steps = dose_progress / d_dose
+    steps = int(dose_progress / d_dose)
     progress = 0
     while dose <= max_iter:
         Fe, Cr, Al = calcPFT(Fe, Cr, Al, pars, vars, steps)

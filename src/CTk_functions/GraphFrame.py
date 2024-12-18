@@ -31,7 +31,6 @@ def run_in_process(result_queue, func, kwargs):
     for output in func(kwargs):
         result_queue.put(output)
 
-
 def figure_draw(func):
     def wrapper(self, *args, **kwargs):
         # Extract necessary arguments
@@ -89,9 +88,8 @@ class CustomToolbar(NavigationToolbar2Tk):
 class GraphFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-        # change corner radius
-        # self._corner_radius = kwargs['corner_radius']
 
+        self.process = None
         self.current_function = None
 
         # Change the graph style depending on whether the light or dark mode is active
@@ -248,18 +246,19 @@ class GraphFrame(ctk.CTkFrame):
         self.functions_save_path = os.path.join(self.master.save_path, folder_name)
 
         # create a process
-        self.process = multiprocessing.Process(
-            target=run_in_process,
-            args=(
-                self.result_queue,
-                self.current_function["function"],
-                kwargs,
-            ),
-        )
-        self.process.start()  # start the process
+        if self.process is None or not self.process.is_alive():
+            self.process = multiprocessing.Process(
+                target=run_in_process,
+                args=(
+                    self.result_queue,
+                    self.current_function["function"],
+                    kwargs,
+                ),
+            )
+            self.process.start()  # start the process
 
-        # After AWAIT_TIME milliseconds, check for any results using the self.check_result_queue function
-        self.master.after(AWAIT_TIME, self.check_result_queue)
+            # After AWAIT_TIME milliseconds, check for any results using the self.check_result_queue function
+            self.master.after(AWAIT_TIME, self.check_result_queue)
 
     # function to update the plot once the needed result is received
     def update_plots(self, iteration, data):
