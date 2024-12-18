@@ -1,9 +1,9 @@
 import numpy as np
 from math import sqrt, pi, exp, log
 
-SIZE = 256;
-N_MAXp2 = SIZE+2
-N_MAX2 = SIZE*SIZE
+SIZE = 256
+N_MAXp2 = SIZE + 2
+N_MAX2 = SIZE * SIZE
 arr_a = np.zeros((N_MAXp2, N_MAXp2), dtype=float)
 arr_b = np.zeros((N_MAXp2, N_MAXp2), dtype=int)
 
@@ -42,9 +42,9 @@ def fill(i, j, c, N, p):
 
 
 def init_arrays(N, array):
-    for i in range(1, N+1):
-        for j in range(1, N+1):
-            arr_a[i][j] = array[(j-1) + N*(i-1)]
+    for i in range(1, N + 1):
+        for j in range(1, N + 1):
+            arr_a[i][j] = array[(j - 1) + N * (i - 1)]
             arr_b[i][j] = 0
 
 
@@ -54,20 +54,20 @@ def calcPrecipitate2d(array, p, N, ell):
     nOfIslands = 0
     meanRadius = 0.0
 
-    for i in range(1, N+1):
-        for j in range(1, N+1):
+    for i in range(1, N + 1):
+        for j in range(1, N + 1):
             if arr_a[i][j] >= p and arr_b[i][j] == 0:
                 c_cnt += 1
                 tmp = fill(i, j, c_cnt, N, p)
-                meanRadius += (1.0*tmp/pi)**0.5
+                meanRadius += (1.0 * tmp / pi) ** 0.5
                 nOfIslands += 1
                 if tmp < 4:
                     c_cnt -= 1
                     arr_b[i][j] = -1
     if nOfIslands != 0:
         meanRadius /= nOfIslands
-        Rp = meanRadius * ell * 1E9
-        Np = exp(1.5 * log(nOfIslands)) / exp(3.0 * log(N * ell)) * 1E-27
+        Rp = meanRadius * ell * 1e9
+        Np = exp(1.5 * log(nOfIslands)) / exp(3.0 * log(N * ell)) * 1e-27
     else:
         Rp = 0.0
         Np = 0.0

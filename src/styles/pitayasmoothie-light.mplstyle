@@ -30,5 +30,5 @@ ytick.minor.size: 0
 font.sans-serif: Overpass, Helvetica, Helvetica Neue, Arial, Liberation Sans, DejaVu Sans, Bitstream Vera Sans, sans-serif
 axes.prop_cycle: cycler('color', ['7A76C2', 'ff6e9c98', 'f62196', '18c0c4', 'f3907e', '66E9EC'])
 image.cmap: RdPu
-figure.facecolor: fefeff
-savefig.facecolor: fefeff
+figure.facecolor: eaecf0
+savefig.facecolor: eaecf0

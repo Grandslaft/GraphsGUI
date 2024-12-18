@@ -1,17 +1,19 @@
 from .calc_functions import *
+from .precipitates import calcPrecipitate2d
 
 R = 8.3144598
-a0Al = 4.05E-10
-a0Cr = 2.91E-10
-a0Fe = 2.86E-10
-ERROR = 1.0E-5
-dt = 1.0E-2
+a0Al = 4.05e-10
+a0Cr = 2.91e-10
+a0Fe = 2.86e-10
+ERROR = 1.0e-5
+dt = 1.0e-2
+
 
 def calc_diagram_prep(progress, xCr_values, T_values, xAl, N, K, r0):
-    if xAl < 1E-5:
+    if xAl < 1e-5:
         xCr_values, T_values = spinodal(R)
         progress = 100
-    if xAl > 1E-5:
+    if xAl > 1e-5:
 
         xCr = 0.1 + progress * 0.8 / 100
         progress += 1
@@ -26,25 +28,43 @@ def calc_diagram_prep(progress, xCr_values, T_values, xAl, N, K, r0):
                 k = 0.0
                 while k < math.pi:
                     l1 = lambda1(
-                        k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
-                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                        k,
+                        pars.kappa,
+                        pars.MCrCr,
+                        pars.MAlAl,
+                        pars.MCrAl,
+                        pars.d2fdCr2,
+                        pars.d2fdCrdAl,
+                        pars.d2fdAl2,
+                        pars.G,
+                        r0,
                     )
                     l2 = lambda1(
-                        k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
-                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                        k,
+                        pars.kappa,
+                        pars.MCrCr,
+                        pars.MAlAl,
+                        pars.MCrAl,
+                        pars.d2fdCr2,
+                        pars.d2fdCrdAl,
+                        pars.d2fdAl2,
+                        pars.G,
+                        r0,
                     )
                     if l1 > 0 or l2 > 0.0:
                         flag = 1
                         break
                     k += dk
-                if flag == 1: break
+                if flag == 1:
+                    break
                 Temp -= 1.0
             if flag == 1:
-                xCr_values.append(xCr*100)
+                xCr_values.append(xCr * 100)
                 T_values.append(Temp)
                 flag = 0
             xCr += 0.01
     return progress, xCr_values, T_values
+
 
 def calc_diagram_irr(progress, K1, dK, arrays, xCr, xAl, N, r0):
     K_values_1 = arrays[0]
@@ -66,11 +86,19 @@ def calc_diagram_irr(progress, K1, dK, arrays, xCr, xAl, N, r0):
             pars = params()
             pars.single_graph(Temp, xCr, xAl, N, K)
             l1_1k = lambda1(
-                dk, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
-                pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                dk,
+                pars.kappa,
+                pars.MCrCr,
+                pars.MAlAl,
+                pars.MCrAl,
+                pars.d2fdCr2,
+                pars.d2fdCrdAl,
+                pars.d2fdAl2,
+                pars.G,
+                r0,
             )
             l2_1k = l1_1k
-            
+
             if l1_1k > 0 or l2_1k > 0:
                 K_values_3.append(K)
                 T_values_3.append(Temp)
@@ -79,12 +107,28 @@ def calc_diagram_irr(progress, K1, dK, arrays, xCr, xAl, N, r0):
                 k = 0.0
                 while k < math.pi:
                     l1_1k = lambda1(
-                        k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
-                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                        k,
+                        pars.kappa,
+                        pars.MCrCr,
+                        pars.MAlAl,
+                        pars.MCrAl,
+                        pars.d2fdCr2,
+                        pars.d2fdCrdAl,
+                        pars.d2fdAl2,
+                        pars.G,
+                        r0,
                     )
                     l1_2k = lambda1(
-                        k + dk, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
-                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                        k + dk,
+                        pars.kappa,
+                        pars.MCrCr,
+                        pars.MAlAl,
+                        pars.MCrAl,
+                        pars.d2fdCr2,
+                        pars.d2fdCrdAl,
+                        pars.d2fdAl2,
+                        pars.G,
+                        r0,
                     )
                     l2_1k = l1_1k
                     l2_2k = l1_2k
@@ -102,8 +146,16 @@ def calc_diagram_irr(progress, K1, dK, arrays, xCr, xAl, N, r0):
             pars = params()
             pars.single_graph(Temp, xCr, xAl, N, K)
             l1_1k = lambda1(
-                k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
-                pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                k,
+                pars.kappa,
+                pars.MCrCr,
+                pars.MAlAl,
+                pars.MCrAl,
+                pars.d2fdCr2,
+                pars.d2fdCrdAl,
+                pars.d2fdAl2,
+                pars.G,
+                r0,
             )
             l2_1k = l1_1k
             if l1_1k > 0 or l2_1k > 0:
@@ -114,12 +166,28 @@ def calc_diagram_irr(progress, K1, dK, arrays, xCr, xAl, N, r0):
                 k = 0.0
                 while k < math.pi:
                     l1_1k = lambda1(
-                        k, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
-                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                        k,
+                        pars.kappa,
+                        pars.MCrCr,
+                        pars.MAlAl,
+                        pars.MCrAl,
+                        pars.d2fdCr2,
+                        pars.d2fdCrdAl,
+                        pars.d2fdAl2,
+                        pars.G,
+                        r0,
                     )
                     l1_2k = lambda1(
-                        k + dk, pars.kappa, pars.MCrCr, pars.MAlAl, pars.MCrAl, 
-                        pars.d2fdCr2, pars.d2fdCrdAl, pars.d2fdAl2, pars.G, r0
+                        k + dk,
+                        pars.kappa,
+                        pars.MCrCr,
+                        pars.MAlAl,
+                        pars.MCrAl,
+                        pars.d2fdCr2,
+                        pars.d2fdCrdAl,
+                        pars.d2fdAl2,
+                        pars.G,
+                        r0,
                     )
                     l2_1k = l1_1k
                     l2_2k = l1_2k
@@ -147,39 +215,52 @@ def calc_diagram_irr(progress, K1, dK, arrays, xCr, xAl, N, r0):
 
     return progress, K, dK, arrays
 
+
 def FeCr_phase_graph(params):
     progress, x, y = 0.0, [], []
     while progress < 100:
-        progress, x, y = calc_diagram_prep(progress, x, y, params['xAl']/100, N=0, K=0, r0=0)
-        yield progress/100, -1, None
+        progress, x, y = calc_diagram_prep(
+            progress, x, y, params["xAl"] / 100, N=0, K=0, r0=0
+        )
+        yield progress / 100, -1, None
     yield 1, -100, [(x, y)]
+
 
 def FeCrAl_phase_graph(params):
     progress, K, dK, arrays = 0.0, 1e-8, 1e-8, [[] for _ in range(8)]
     while progress < 100:
-        progress, K, dK, arrays = calc_diagram_irr(progress, K, dK, arrays, params['xCr']/100, params['xAl']/100, params['N'],  params['r0'])
-        yield progress/100, -1, None
+        progress, K, dK, arrays = calc_diagram_irr(
+            progress,
+            K,
+            dK,
+            arrays,
+            params["xCr"] / 100,
+            params["xAl"] / 100,
+            params["N"],
+            params["r0"],
+        )
+        yield progress / 100, -1, None
     yield 1, -100, [compile_arrays(arrays)]
 
 
 def FeCr_phase_model(params):
-    Cr0 = params['Cr0']/100
-    Al0 = params['Al0']/100
-    T = params['T']
-    max_t = params['max_t']
-    Size = int(params['Size'])
-    
+    Cr0 = params["Cr0"] / 100
+    Al0 = params["Al0"] / 100
+    T = params["T"]
+    max_t = params["max_t"]
+    Size = int(params["Size"])
+
     # if import path to the saved data is specified
-    to_import, vtk_path, xyz_path = False, '', ''
-    if params.get('vtk_path'):
+    to_import, vtk_path, xyz_path = False, "", ""
+    if params.get("vtk_path"):
         to_import = True
-        vtk_path = params['vtk_path']
-    if params.get('xyz_path'):
+        vtk_path = params["vtk_path"]
+    if params.get("xyz_path"):
         to_import = True
-        xyz_path = params['xyz_path']
-        
+        xyz_path = params["xyz_path"]
+
     K, N, r0 = 0, 0, 0
-    
+
     Rp_list = []
     Np_list = []
     t_list = []
@@ -187,9 +268,11 @@ def FeCr_phase_model(params):
     tprogress = max_t / 100
     steps = int(tprogress / dt)
     Fe0 = 1.0 - Cr0 - Al0
-    TotSize = int(Size ** 2)
+    TotSize = int(Size**2)
     ell = a0Al * Al0 + a0Cr * Cr0 + a0Fe * Fe0
-    Fe, Cr, Al, pars, vars = initPFT(Cr0, Al0, T, N, K, r0, ell, Size, TotSize, to_import, vtk_path, xyz_path)
+    Fe, Cr, Al, pars, vars = initPFT(
+        Cr0, Al0, T, N, K, r0, ell, Size, TotSize, to_import, vtk_path, xyz_path
+    )
     scaling = pars.scaling
     progress = 0
     while t <= max_t:
@@ -199,20 +282,21 @@ def FeCr_phase_model(params):
         Rp_list.append(Rp)
         Np_list.append(Np)
         progress += 1
-        
-        yield progress/100, t, [Cr, Al, (t_list, Rp_list), (t_list, Np_list)]
+
+        yield progress / 100, t, [Cr, Al, (t_list, Rp_list), (t_list, Np_list)]
         t += tprogress
 
+
 def FeCrAl_phase_model(params):
-    Cr0 = params['Cr0']/100
-    Al0 = params['Al0']/100
-    T = params['T']
-    K = params['K']
-    N = params['N']
-    r0 = params['r0']
-    max_iter = params['max_dose']
-    Size = int(params['Size'])
-    
+    Cr0 = params["Cr0"] / 100
+    Al0 = params["Al0"] / 100
+    T = params["T"]
+    K = params["K"]
+    N = params["N"]
+    r0 = params["r0"]
+    max_iter = params["max_dose"]
+    Size = int(params["Size"])
+
     Rp_list = []
     Np_list = []
     t_list = []
@@ -221,11 +305,13 @@ def FeCrAl_phase_model(params):
     Fe0 = 1.0 - Cr0 - Al0
     TotSize = int(Size**2)
     ell = a0Al * Al0 + a0Cr * Cr0 + a0Fe * Fe0
-    Fe, Cr, Al, pars, vars = initPFT(Cr0, Al0, T, N, K, r0, ell, Size, TotSize, '', '', 0)
+    Fe, Cr, Al, pars, vars = initPFT(
+        Cr0, Al0, T, N, K, r0, ell, Size, TotSize, "", "", 0
+    )
     scaling = pars.scaling
     d_dose = dt * K * scaling
     dose_progress = max_iter / 100
-    steps = int(dose_progress/d_dose)
+    steps = dose_progress / d_dose
     progress = 0
     while dose <= max_iter:
         Fe, Cr, Al = calcPFT(Fe, Cr, Al, pars, vars, steps)
@@ -234,10 +320,11 @@ def FeCrAl_phase_model(params):
         Rp_list.append(Rp)
         Np_list.append(Np)
         progress += 1
-                
-        yield progress/100, dose, [Cr, Al, (t_list, Rp_list), (t_list, Np_list)]
+
+        yield progress / 100, dose, [Cr, Al, (t_list, Rp_list), (t_list, Np_list)]
         dose += dose_progress
-            
+
+
 ###################### МОДЕЛЮВАННЯ РІВНОВАЖНІ УМОВИ #############################
 ############### input data ###########
 # Cr0 = 0.3
